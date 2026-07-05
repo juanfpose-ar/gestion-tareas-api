@@ -18,4 +18,6 @@ public interface UsuarioConversacionRepository extends JpaRepository<UsuarioConv
            "WHERE uc.usuario.id = :usuarioId AND uc.eliminada = false " +
            "ORDER BY c.fechaUltimaActividad DESC")
     List<UsuarioConversacion> findActiveConversationsForUser(@Param("usuarioId") Long usuarioId);
+
+    int countByUsuarioIdAndLeidaFalseAndArchivadaFalseAndEliminadaFalse(Long usuarioId);
 }

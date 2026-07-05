@@ -11,4 +11,5 @@ public interface UsuarioRepository extends JpaRepository<Usuario, Long> {
     Optional<Usuario> findByUsername(String username);
     boolean existsByUsername(String username);
     java.util.List<Usuario> findByTablerosAsignadosId(Long tableroId);
+    java.util.List<Usuario> findByActivoTrue();
 }

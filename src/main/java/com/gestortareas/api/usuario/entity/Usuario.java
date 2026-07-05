@@ -6,6 +6,7 @@ import com.gestortareas.api.tablero.entity.Tablero;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -46,6 +47,9 @@ public class Usuario {
     @Column(name = "color_avatar", length = 20)
     @Builder.Default
     private String colorAvatar = "#0d6efd";
+
+    @Column(name = "ultimo_digest_enviado")
+    private LocalDateTime ultimoDigestEnviado;
 
     @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(
