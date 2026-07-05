@@ -7,7 +7,6 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -30,7 +29,8 @@ public class EstadoTableroController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<EstadoTableroDTO> actualizarEstado(@PathVariable Long id, @Valid @RequestBody EstadoTableroRequest request) {
+    public ResponseEntity<EstadoTableroDTO> actualizarEstado(@PathVariable Long id,
+            @Valid @RequestBody EstadoTableroRequest request) {
         return ResponseEntity.ok(estadoService.actualizarEstado(id, request));
     }
 

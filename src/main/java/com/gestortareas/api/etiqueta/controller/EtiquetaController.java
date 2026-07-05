@@ -7,7 +7,6 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -35,7 +34,8 @@ public class EtiquetaController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<EtiquetaDTO> actualizarEtiqueta(@PathVariable Long id, @Valid @RequestBody EtiquetaRequest request) {
+    public ResponseEntity<EtiquetaDTO> actualizarEtiqueta(@PathVariable Long id,
+            @Valid @RequestBody EtiquetaRequest request) {
         return ResponseEntity.ok(etiquetaService.actualizarEtiqueta(id, request));
     }
 
