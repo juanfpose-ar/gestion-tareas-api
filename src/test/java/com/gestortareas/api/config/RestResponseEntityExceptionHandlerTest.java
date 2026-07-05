@@ -9,14 +9,12 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.DisabledException;
 import org.springframework.validation.BindingResult;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -38,35 +36,40 @@ public class RestResponseEntityExceptionHandlerTest {
 
     @Test
     public void testHandleDisabled() {
-        ResponseEntity<Map<String, Object>> response = handler.handleDisabled(new DisabledException("inactive"), request);
+        ResponseEntity<Map<String, Object>> response = handler.handleDisabled(new DisabledException("inactive"),
+                request);
         assertEquals(HttpStatus.FORBIDDEN, response.getStatusCode());
         assertEquals("USUARIO_INACTIVO", response.getBody().get("message"));
     }
 
     @Test
     public void testHandleBadCredentials() {
-        ResponseEntity<Map<String, Object>> response = handler.handleBadCredentials(new BadCredentialsException("bad credentials"), request);
+        ResponseEntity<Map<String, Object>> response = handler
+                .handleBadCredentials(new BadCredentialsException("bad credentials"), request);
         assertEquals(HttpStatus.UNAUTHORIZED, response.getStatusCode());
         assertEquals("Credenciales inválidas", response.getBody().get("message"));
     }
 
     @Test
     public void testHandleEntityNotFound() {
-        ResponseEntity<Map<String, Object>> response = handler.handleNoContent(new EntityNotFoundException("not found"), request);
+        ResponseEntity<Map<String, Object>> response = handler.handleNoContent(new EntityNotFoundException("not found"),
+                request);
         assertEquals(HttpStatus.NO_CONTENT, response.getStatusCode());
         assertEquals("not found", response.getBody().get("message"));
     }
 
     @Test
     public void testHandleConflict() {
-        ResponseEntity<Map<String, Object>> response = handler.handleConflict(new ConflictException("conflict"), request);
+        ResponseEntity<Map<String, Object>> response = handler.handleConflict(new ConflictException("conflict"),
+                request);
         assertEquals(HttpStatus.CONFLICT, response.getStatusCode());
         assertEquals("conflict", response.getBody().get("message"));
     }
 
     @Test
     public void testHandleBusinessValidation() {
-        ResponseEntity<Map<String, Object>> response = handler.handleBusinessValidation(new BusinessValidationException("invalid business"), request);
+        ResponseEntity<Map<String, Object>> response = handler
+                .handleBusinessValidation(new BusinessValidationException("invalid business"), request);
         assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
         assertEquals("invalid business", response.getBody().get("message"));
     }
@@ -93,7 +96,8 @@ public class RestResponseEntityExceptionHandlerTest {
 
     @Test
     public void testHandleGenericException() {
-        ResponseEntity<Map<String, Object>> response = handler.handleGeneric(new RuntimeException("unexpected"), request);
+        ResponseEntity<Map<String, Object>> response = handler.handleGeneric(new RuntimeException("unexpected"),
+                request);
         assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, response.getStatusCode());
         assertEquals("unexpected", response.getBody().get("message"));
     }

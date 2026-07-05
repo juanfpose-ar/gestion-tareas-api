@@ -16,7 +16,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
@@ -51,8 +50,10 @@ public class MensajeriaServiceImplTest {
     public void setup() {
         userEmisor = Usuario.builder().id(1L).username("emisor").nombreCompleto("Emisor Test").build();
         userReceptor = Usuario.builder().id(2L).username("receptor").nombreCompleto("Receptor Test").build();
-        conversacion = Conversacion.builder().id(10L).asunto("Asunto Test").fechaUltimaActividad(LocalDateTime.now()).participantes(new ArrayList<>()).build();
-        ucEmisor = UsuarioConversacion.builder().id(1L).usuario(userEmisor).conversacion(conversacion).leida(false).archivada(false).eliminada(false).destacada(false).build();
+        conversacion = Conversacion.builder().id(10L).asunto("Asunto Test").fechaUltimaActividad(LocalDateTime.now())
+                .participantes(new ArrayList<>()).build();
+        ucEmisor = UsuarioConversacion.builder().id(1L).usuario(userEmisor).conversacion(conversacion).leida(false)
+                .archivada(false).eliminada(false).destacada(false).build();
         conversacion.getParticipantes().add(ucEmisor);
     }
 
@@ -60,8 +61,9 @@ public class MensajeriaServiceImplTest {
     public void testObtenerBandeja_Exitoso() {
         when(usuarioRepository.findByUsername("emisor")).thenReturn(Optional.of(userEmisor));
         when(usuarioConversacionRepository.findActiveConversationsForUser(1L)).thenReturn(List.of(ucEmisor));
-        
-        Mensaje msg = Mensaje.builder().id(100L).emisor(userEmisor).contenido("Hola").fechaEnvio(LocalDateTime.now()).build();
+
+        Mensaje msg = Mensaje.builder().id(100L).emisor(userEmisor).contenido("Hola").fechaEnvio(LocalDateTime.now())
+                .build();
         conversacion.setMensajes(List.of(msg));
         when(mensajeRepository.findFirstByConversacionIdOrderByFechaEnvioDesc(10L)).thenReturn(msg);
 
@@ -83,8 +85,9 @@ public class MensajeriaServiceImplTest {
         when(usuarioRepository.findByUsername("emisor")).thenReturn(Optional.of(userEmisor));
         when(conversacionRepository.findById(10L)).thenReturn(Optional.of(conversacion));
         when(usuarioConversacionRepository.findByUsuarioIdAndConversacionId(1L, 10L)).thenReturn(Optional.of(ucEmisor));
-        
-        Mensaje msg = Mensaje.builder().id(100L).emisor(userEmisor).contenido("Hola").fechaEnvio(LocalDateTime.now()).build();
+
+        Mensaje msg = Mensaje.builder().id(100L).emisor(userEmisor).contenido("Hola").fechaEnvio(LocalDateTime.now())
+                .build();
         when(mensajeRepository.findByConversacionIdOrderByFechaEnvioAsc(10L)).thenReturn(List.of(msg));
 
         ConversacionDetalleDTO result = mensajeriaService.obtenerConversacion(10L, "emisor");
@@ -151,7 +154,8 @@ public class MensajeriaServiceImplTest {
         when(conversacionRepository.findById(10L)).thenReturn(Optional.of(conversacion));
         when(usuarioConversacionRepository.findByUsuarioIdAndConversacionId(1L, 10L)).thenReturn(Optional.empty());
 
-        assertThrows(BusinessValidationException.class, () -> mensajeriaService.responderConversacion(10L, request, "emisor"));
+        assertThrows(BusinessValidationException.class,
+                () -> mensajeriaService.responderConversacion(10L, request, "emisor"));
     }
 
     @Test
@@ -163,7 +167,8 @@ public class MensajeriaServiceImplTest {
         when(conversacionRepository.findById(10L)).thenReturn(Optional.of(conversacion));
         when(usuarioConversacionRepository.findByUsuarioIdAndConversacionId(1L, 10L)).thenReturn(Optional.of(ucEmisor));
 
-        assertThrows(BusinessValidationException.class, () -> mensajeriaService.responderConversacion(10L, request, "emisor"));
+        assertThrows(BusinessValidationException.class,
+                () -> mensajeriaService.responderConversacion(10L, request, "emisor"));
     }
 
     @Test

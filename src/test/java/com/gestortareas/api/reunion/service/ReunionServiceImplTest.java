@@ -1,6 +1,5 @@
 package com.gestortareas.api.reunion.service;
 
-import com.gestortareas.api.exceptions.BusinessValidationException;
 import com.gestortareas.api.reunion.dto.ReunionDTO;
 import com.gestortareas.api.reunion.dto.ReunionRequest;
 import com.gestortareas.api.reunion.entity.Reunion;

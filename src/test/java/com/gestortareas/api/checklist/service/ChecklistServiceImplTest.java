@@ -13,7 +13,6 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -60,7 +59,8 @@ public class ChecklistServiceImplTest {
 
     @Test
     public void testAddItem_Exitoso() {
-        ChecklistItemDTO request = ChecklistItemDTO.builder().texto("New Item").orden((short) 2).completado(false).build();
+        ChecklistItemDTO request = ChecklistItemDTO.builder().texto("New Item").orden((short) 2).completado(false)
+                .build();
 
         when(ticketRepository.findById(1L)).thenReturn(Optional.of(ticket));
         when(itemRepository.save(any(ChecklistItem.class))).thenAnswer(inv -> {
@@ -87,7 +87,8 @@ public class ChecklistServiceImplTest {
 
     @Test
     public void testUpdateItem_Exitoso() {
-        ChecklistItemDTO request = ChecklistItemDTO.builder().texto("Updated Item").orden((short) 3).completado(true).build();
+        ChecklistItemDTO request = ChecklistItemDTO.builder().texto("Updated Item").orden((short) 3).completado(true)
+                .build();
 
         when(itemRepository.findById(10L)).thenReturn(Optional.of(item));
 
