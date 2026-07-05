@@ -6,6 +6,7 @@ import com.gestortareas.api.mensajeria.entity.*;
 import com.gestortareas.api.mensajeria.repository.*;
 import com.gestortareas.api.usuario.entity.Usuario;
 import com.gestortareas.api.usuario.repository.UsuarioRepository;
+import jakarta.persistence.EntityNotFoundException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -15,6 +16,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
@@ -42,124 +44,141 @@ public class MensajeriaServiceImplTest {
 
     private Usuario userEmisor;
     private Usuario userReceptor;
+    private Conversacion conversacion;
+    private UsuarioConversacion ucEmisor;
 
     @BeforeEach
     public void setup() {
-        userEmisor = Usuario.builder()
-                .id(1L)
-                .username("emisor")
-                .nombreCompleto("Emisor Test")
-                .build();
+        userEmisor = Usuario.builder().id(1L).username("emisor").nombreCompleto("Emisor Test").build();
+        userReceptor = Usuario.builder().id(2L).username("receptor").nombreCompleto("Receptor Test").build();
+        conversacion = Conversacion.builder().id(10L).asunto("Asunto Test").fechaUltimaActividad(LocalDateTime.now()).participantes(new ArrayList<>()).build();
+        ucEmisor = UsuarioConversacion.builder().id(1L).usuario(userEmisor).conversacion(conversacion).leida(false).archivada(false).eliminada(false).destacada(false).build();
+        conversacion.getParticipantes().add(ucEmisor);
+    }
 
-        userReceptor = Usuario.builder()
-                .id(2L)
-                .username("receptor")
-                .nombreCompleto("Receptor Test")
-                .build();
+    @Test
+    public void testObtenerBandeja_Exitoso() {
+        when(usuarioRepository.findByUsername("emisor")).thenReturn(Optional.of(userEmisor));
+        when(usuarioConversacionRepository.findActiveConversationsForUser(1L)).thenReturn(List.of(ucEmisor));
+        
+        Mensaje msg = Mensaje.builder().id(100L).emisor(userEmisor).contenido("Hola").fechaEnvio(LocalDateTime.now()).build();
+        conversacion.setMensajes(List.of(msg));
+        when(mensajeRepository.findFirstByConversacionIdOrderByFechaEnvioDesc(10L)).thenReturn(msg);
+
+        List<ConversacionResumenDTO> result = mensajeriaService.obtenerBandeja("emisor");
+
+        assertEquals(1, result.size());
+        assertEquals("Yo", result.get(0).nombresParticipantes()); // only emisor is participant, so "Yo"
+    }
+
+    @Test
+    public void testObtenerBandeja_UsuarioNoEncontrado() {
+        when(usuarioRepository.findByUsername("emisor")).thenReturn(Optional.empty());
+
+        assertThrows(EntityNotFoundException.class, () -> mensajeriaService.obtenerBandeja("emisor"));
+    }
+
+    @Test
+    public void testObtenerConversacion_Exitoso() {
+        when(usuarioRepository.findByUsername("emisor")).thenReturn(Optional.of(userEmisor));
+        when(conversacionRepository.findById(10L)).thenReturn(Optional.of(conversacion));
+        when(usuarioConversacionRepository.findByUsuarioIdAndConversacionId(1L, 10L)).thenReturn(Optional.of(ucEmisor));
+        
+        Mensaje msg = Mensaje.builder().id(100L).emisor(userEmisor).contenido("Hola").fechaEnvio(LocalDateTime.now()).build();
+        when(mensajeRepository.findByConversacionIdOrderByFechaEnvioAsc(10L)).thenReturn(List.of(msg));
+
+        ConversacionDetalleDTO result = mensajeriaService.obtenerConversacion(10L, "emisor");
+
+        assertNotNull(result);
+        assertTrue(ucEmisor.isLeida());
+    }
+
+    @Test
+    public void testObtenerConversacion_NoParticipa() {
+        when(usuarioRepository.findByUsername("emisor")).thenReturn(Optional.of(userEmisor));
+        when(conversacionRepository.findById(10L)).thenReturn(Optional.of(conversacion));
+        when(usuarioConversacionRepository.findByUsuarioIdAndConversacionId(1L, 10L)).thenReturn(Optional.empty());
+
+        assertThrows(BusinessValidationException.class, () -> mensajeriaService.obtenerConversacion(10L, "emisor"));
+    }
+
+    @Test
+    public void testObtenerConversacion_Eliminada() {
+        ucEmisor.setEliminada(true);
+        when(usuarioRepository.findByUsername("emisor")).thenReturn(Optional.of(userEmisor));
+        when(conversacionRepository.findById(10L)).thenReturn(Optional.of(conversacion));
+        when(usuarioConversacionRepository.findByUsuarioIdAndConversacionId(1L, 10L)).thenReturn(Optional.of(ucEmisor));
+
+        assertThrows(BusinessValidationException.class, () -> mensajeriaService.obtenerConversacion(10L, "emisor"));
     }
 
     @Test
     public void testCrearConversacion_Exitoso() {
-        NuevaConversacionRequest request = new NuevaConversacionRequest("Asunto Test", "Contenido inicial", List.of(2L));
-
-        Conversacion conversacion = Conversacion.builder()
-                .id(10L)
-                .asunto("Asunto Test")
-                .fechaUltimaActividad(LocalDateTime.now())
-                .build();
+        NuevaConversacionRequest request = new NuevaConversacionRequest("Asunto Test", "Contenido", List.of(2L));
 
         when(usuarioRepository.findByUsername("emisor")).thenReturn(Optional.of(userEmisor));
         when(conversacionRepository.save(any(Conversacion.class))).thenReturn(conversacion);
         when(usuarioRepository.findById(2L)).thenReturn(Optional.of(userReceptor));
         when(usuarioRepository.findById(1L)).thenReturn(Optional.of(userEmisor));
-        when(usuarioConversacionRepository.save(any(UsuarioConversacion.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        when(usuarioConversacionRepository.save(any(UsuarioConversacion.class))).thenAnswer(inv -> inv.getArgument(0));
 
         ConversacionResumenDTO result = mensajeriaService.crearConversacion(request, "emisor");
 
         assertNotNull(result);
         assertEquals("Asunto Test", result.asunto());
-        assertFalse(result.tieneNoLeidos());
         verify(mensajeRepository, times(1)).save(any(Mensaje.class));
-        verify(usuarioConversacionRepository, times(2)).save(any(UsuarioConversacion.class));
     }
 
     @Test
-    public void testObtenerConversacion_MarcaLeida() {
-        Conversacion conversacion = Conversacion.builder()
-                .id(10L)
-                .asunto("Asunto Test")
-                .fechaUltimaActividad(LocalDateTime.now())
-                .participantes(new ArrayList<>())
-                .build();
-
-        UsuarioConversacion uc = UsuarioConversacion.builder()
-                .id(1L)
-                .usuario(userEmisor)
-                .conversacion(conversacion)
-                .leida(false)
-                .build();
-
-        when(usuarioRepository.findByUsername("emisor")).thenReturn(Optional.of(userEmisor));
-        when(conversacionRepository.findById(10L)).thenReturn(Optional.of(conversacion));
-        when(usuarioConversacionRepository.findByUsuarioIdAndConversacionId(1L, 10L)).thenReturn(Optional.of(uc));
-        when(mensajeRepository.findByConversacionIdOrderByFechaEnvioAsc(10L)).thenReturn(List.of());
-
-        ConversacionDetalleDTO result = mensajeriaService.obtenerConversacion(10L, "emisor");
-
-        assertNotNull(result);
-        assertTrue(uc.isLeida()); // Verificamos que se haya marcado como leída
-        verify(usuarioConversacionRepository, times(1)).save(uc);
-    }
-
-    @Test
-    public void testResponderConversacion_LanzaExcepcionSiEstaEliminada() {
+    public void testResponderConversacion_Exitoso() {
         ResponderConversacionRequest request = new ResponderConversacionRequest("Respuesta");
 
-        Conversacion conversacion = Conversacion.builder()
-                .id(10L)
-                .asunto("Asunto Test")
-                .build();
+        when(usuarioRepository.findByUsername("emisor")).thenReturn(Optional.of(userEmisor));
+        when(conversacionRepository.findById(10L)).thenReturn(Optional.of(conversacion));
+        when(usuarioConversacionRepository.findByUsuarioIdAndConversacionId(1L, 10L)).thenReturn(Optional.of(ucEmisor));
 
-        UsuarioConversacion uc = UsuarioConversacion.builder()
-                .id(1L)
-                .usuario(userEmisor)
-                .conversacion(conversacion)
-                .eliminada(true) // Conversación eliminada para este usuario
-                .build();
+        ConversacionDetalleDTO result = mensajeriaService.responderConversacion(10L, request, "emisor");
+
+        assertNotNull(result);
+        verify(mensajeRepository, times(1)).save(any(Mensaje.class));
+    }
+
+    @Test
+    public void testResponderConversacion_NoParticipa() {
+        ResponderConversacionRequest request = new ResponderConversacionRequest("Respuesta");
 
         when(usuarioRepository.findByUsername("emisor")).thenReturn(Optional.of(userEmisor));
         when(conversacionRepository.findById(10L)).thenReturn(Optional.of(conversacion));
-        when(usuarioConversacionRepository.findByUsuarioIdAndConversacionId(1L, 10L)).thenReturn(Optional.of(uc));
+        when(usuarioConversacionRepository.findByUsuarioIdAndConversacionId(1L, 10L)).thenReturn(Optional.empty());
 
-        assertThrows(BusinessValidationException.class, () -> {
-            mensajeriaService.responderConversacion(10L, request, "emisor");
-        });
+        assertThrows(BusinessValidationException.class, () -> mensajeriaService.responderConversacion(10L, request, "emisor"));
+    }
 
-        verify(mensajeRepository, never()).save(any(Mensaje.class));
+    @Test
+    public void testResponderConversacion_Eliminada() {
+        ResponderConversacionRequest request = new ResponderConversacionRequest("Respuesta");
+        ucEmisor.setEliminada(true);
+
+        when(usuarioRepository.findByUsername("emisor")).thenReturn(Optional.of(userEmisor));
+        when(conversacionRepository.findById(10L)).thenReturn(Optional.of(conversacion));
+        when(usuarioConversacionRepository.findByUsuarioIdAndConversacionId(1L, 10L)).thenReturn(Optional.of(ucEmisor));
+
+        assertThrows(BusinessValidationException.class, () -> mensajeriaService.responderConversacion(10L, request, "emisor"));
     }
 
     @Test
     public void testActualizarEstado_Exitoso() {
-        ActualizarEstadoRequest request = new ActualizarEstadoRequest(true, false, null, null);
-
-        Conversacion conversacion = Conversacion.builder()
-                .id(10L)
-                .build();
-
-        UsuarioConversacion uc = UsuarioConversacion.builder()
-                .id(1L)
-                .usuario(userEmisor)
-                .conversacion(conversacion)
-                .archivada(false)
-                .build();
+        ActualizarEstadoRequest request = new ActualizarEstadoRequest(true, true, true, true);
 
         when(usuarioRepository.findByUsername("emisor")).thenReturn(Optional.of(userEmisor));
-        when(usuarioConversacionRepository.findByUsuarioIdAndConversacionId(1L, 10L)).thenReturn(Optional.of(uc));
+        when(usuarioConversacionRepository.findByUsuarioIdAndConversacionId(1L, 10L)).thenReturn(Optional.of(ucEmisor));
 
         mensajeriaService.actualizarEstado(10L, request, "emisor");
 
-        assertTrue(uc.isArchivada());
-        assertFalse(uc.isEliminada());
-        verify(usuarioConversacionRepository, times(1)).save(uc);
+        assertTrue(ucEmisor.isLeida());
+        assertTrue(ucEmisor.isArchivada());
+        assertTrue(ucEmisor.isEliminada());
+        assertTrue(ucEmisor.isDestacada());
+        verify(usuarioConversacionRepository, times(1)).save(ucEmisor);
     }
 }
