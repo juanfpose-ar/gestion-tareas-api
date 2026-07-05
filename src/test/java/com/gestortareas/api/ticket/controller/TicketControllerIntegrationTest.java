@@ -43,7 +43,7 @@ public class TicketControllerIntegrationTest {
     private UsuarioRepository usuarioRepository;
 
     @Test
-    @WithMockUser
+    @WithMockUser(roles = "ADMIN")
     public void testListarActivosPorTablero() throws Exception {
         TicketCardDTO card = TicketCardDTO.builder().id(10L).titulo("Test Card").build();
         when(ticketService.listarActivosPorTablero(1L)).thenReturn(List.of(card));
@@ -55,7 +55,7 @@ public class TicketControllerIntegrationTest {
     }
 
     @Test
-    @WithMockUser
+    @WithMockUser(roles = "ADMIN")
     public void testListarArchivadosPorTablero() throws Exception {
         TicketCardDTO card = TicketCardDTO.builder().id(10L).titulo("Archived Card").build();
         when(ticketService.listarArchivadosPorTablero(1L)).thenReturn(List.of(card));
@@ -66,7 +66,7 @@ public class TicketControllerIntegrationTest {
     }
 
     @Test
-    @WithMockUser
+    @WithMockUser(roles = "ADMIN")
     public void testListarPorVersion() throws Exception {
         TicketCardDTO card = TicketCardDTO.builder().id(10L).titulo("Version Card").build();
         when(ticketService.listarPorVersion(2L)).thenReturn(List.of(card));
@@ -77,7 +77,7 @@ public class TicketControllerIntegrationTest {
     }
 
     @Test
-    @WithMockUser
+    @WithMockUser(roles = "ADMIN")
     public void testObtenerPorId() throws Exception {
         TicketDTO dto = TicketDTO.builder().id(10L).titulo("Ticket").build();
         when(ticketService.obtenerPorId(10L)).thenReturn(dto);
@@ -88,7 +88,7 @@ public class TicketControllerIntegrationTest {
     }
 
     @Test
-    @WithMockUser(username = "admin")
+    @WithMockUser(username = "admin", roles = "ADMIN")
     public void testCrearTicket_Retorna201() throws Exception {
         TicketRequest request = new TicketRequest();
         request.setTitulo("New Ticket");
@@ -110,7 +110,7 @@ public class TicketControllerIntegrationTest {
     }
 
     @Test
-    @WithMockUser(username = "admin")
+    @WithMockUser(username = "admin", roles = "ADMIN")
     public void testActualizarTicket() throws Exception {
         TicketRequest request = new TicketRequest();
         request.setTitulo("Updated Ticket");
@@ -131,7 +131,7 @@ public class TicketControllerIntegrationTest {
     }
 
     @Test
-    @WithMockUser
+    @WithMockUser(roles = "ADMIN")
     public void testCambiarEstado() throws Exception {
         TicketDTO dto = TicketDTO.builder().id(10L).estadoId(2L).build();
         when(ticketService.cambiarEstado(10L, 2L)).thenReturn(dto);
@@ -143,7 +143,7 @@ public class TicketControllerIntegrationTest {
     }
 
     @Test
-    @WithMockUser
+    @WithMockUser(roles = "ADMIN")
     public void testReordenarEnEstado() throws Exception {
         doNothing().when(ticketService).reordenarEnEstado(eq(1L), any(List.class));
 
@@ -154,7 +154,7 @@ public class TicketControllerIntegrationTest {
     }
 
     @Test
-    @WithMockUser
+    @WithMockUser(roles = "ADMIN")
     public void testCambiarArchivado() throws Exception {
         TicketDTO dto = TicketDTO.builder().id(10L).archivado(true).build();
         when(ticketService.cambiarArchivado(10L, true)).thenReturn(dto);
@@ -166,7 +166,7 @@ public class TicketControllerIntegrationTest {
     }
 
     @Test
-    @WithMockUser
+    @WithMockUser(roles = "ADMIN")
     public void testCambiarCompletado() throws Exception {
         TicketDTO dto = TicketDTO.builder().id(10L).completado(true).build();
         when(ticketService.cambiarCompletado(10L, true)).thenReturn(dto);
@@ -178,7 +178,7 @@ public class TicketControllerIntegrationTest {
     }
 
     @Test
-    @WithMockUser
+    @WithMockUser(roles = "ADMIN")
     public void testEliminarTicket() throws Exception {
         doNothing().when(ticketService).eliminarTicket(10L);
 
@@ -187,7 +187,7 @@ public class TicketControllerIntegrationTest {
     }
 
     @Test
-    @WithMockUser
+    @WithMockUser(roles = "ADMIN")
     public void testAsignarUsuario() throws Exception {
         TicketDTO dto = TicketDTO.builder().id(10L).build();
         when(ticketService.asignarUsuario(10L, 5L)).thenReturn(dto);
@@ -197,7 +197,7 @@ public class TicketControllerIntegrationTest {
     }
 
     @Test
-    @WithMockUser
+    @WithMockUser(roles = "ADMIN")
     public void testDesasignarUsuario() throws Exception {
         TicketDTO dto = TicketDTO.builder().id(10L).build();
         when(ticketService.desasignarUsuario(10L, 5L)).thenReturn(dto);
@@ -207,7 +207,7 @@ public class TicketControllerIntegrationTest {
     }
 
     @Test
-    @WithMockUser
+    @WithMockUser(roles = "ADMIN")
     public void testAsignarInformado() throws Exception {
         TicketDTO dto = TicketDTO.builder().id(10L).build();
         when(ticketService.asignarInformado(10L, 5L)).thenReturn(dto);
@@ -217,7 +217,7 @@ public class TicketControllerIntegrationTest {
     }
 
     @Test
-    @WithMockUser
+    @WithMockUser(roles = "ADMIN")
     public void testDesasignarInformado() throws Exception {
         TicketDTO dto = TicketDTO.builder().id(10L).build();
         when(ticketService.desasignarInformado(10L, 5L)).thenReturn(dto);

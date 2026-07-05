@@ -34,7 +34,7 @@ public class RecordatorioControllerIntegrationTest {
     private RecordatorioService service;
 
     @Test
-    @WithMockUser
+    @WithMockUser(roles = "ADMIN")
     public void testGetByTicket() throws Exception {
         RecordatorioDTO dto = RecordatorioDTO.builder().id(10L).tipo(TipoRecordatorio.PERSONALIZADO).build();
         when(service.findByTicketId(1L)).thenReturn(List.of(dto));
@@ -45,7 +45,7 @@ public class RecordatorioControllerIntegrationTest {
     }
 
     @Test
-    @WithMockUser
+    @WithMockUser(roles = "ADMIN")
     public void testAddRecordatorio() throws Exception {
         RecordatorioDTO request = RecordatorioDTO.builder().tipo(TipoRecordatorio.PERSONALIZADO).build();
         RecordatorioDTO dto = RecordatorioDTO.builder().id(11L).tipo(TipoRecordatorio.PERSONALIZADO).build();

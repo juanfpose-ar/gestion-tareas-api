@@ -15,6 +15,7 @@ import org.springframework.security.authentication.DisabledException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.multipart.MaxUploadSizeExceededException;
 
 import com.gestortareas.api.exceptions.BusinessValidationException;
 import com.gestortareas.api.exceptions.ConflictException;
@@ -47,6 +48,13 @@ public class RestResponseEntityExceptionHandler {
         return buildError(HttpStatus.NO_CONTENT, ex.getMessage(), request);
     }
 
+    @ExceptionHandler(org.springframework.security.access.AccessDeniedException.class)
+    public ResponseEntity<Map<String, Object>> handleAccessDenied(
+            org.springframework.security.access.AccessDeniedException ex, HttpServletRequest request) {
+        log.warn("Acceso denegado: {}", ex.getMessage());
+        return buildError(HttpStatus.FORBIDDEN, "No tenés acceso a este recurso", request);
+    }
+
     @ExceptionHandler(ConflictException.class)
     public ResponseEntity<Map<String, Object>> handleConflict(
             ConflictException ex, HttpServletRequest request) {
@@ -69,6 +77,13 @@ public class RestResponseEntityExceptionHandler {
                 .collect(Collectors.joining(", "));
         log.error("Validation error: {}", message);
         return buildError(HttpStatus.BAD_REQUEST, message, request);
+    }
+
+    @ExceptionHandler(MaxUploadSizeExceededException.class)
+    public ResponseEntity<Map<String, Object>> handleMaxUploadSize(
+            MaxUploadSizeExceededException ex, HttpServletRequest request) {
+        log.warn("Archivo demasiado grande: {}", ex.getMessage());
+        return buildError(HttpStatus.BAD_REQUEST, "El archivo supera el tamaño máximo permitido", request);
     }
 
     @ExceptionHandler({ ConstraintViolationException.class, HttpMessageNotReadableException.class })

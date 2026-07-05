@@ -7,6 +7,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface TicketRepository extends JpaRepository<Ticket, Long> {
@@ -21,4 +22,7 @@ public interface TicketRepository extends JpaRepository<Ticket, Long> {
     @Query("SELECT DISTINCT t FROM Ticket t LEFT JOIN t.asignados a LEFT JOIN t.informados i " +
            "WHERE t.archivado = false AND (a.id = :usuarioId OR i.id = :usuarioId)")
     List<Ticket> findRelevantesParaUsuario(@Param("usuarioId") Long usuarioId);
+
+    @Query("SELECT t.tablero.id FROM Ticket t WHERE t.id = :ticketId")
+    Optional<Long> findTableroIdByTicketId(@Param("ticketId") Long ticketId);
 }

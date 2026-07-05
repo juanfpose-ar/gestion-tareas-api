@@ -34,7 +34,7 @@ public class ChecklistControllerIntegrationTest {
     private ChecklistService service;
 
     @Test
-    @WithMockUser
+    @WithMockUser(roles = "ADMIN")
     public void testGetByTicket() throws Exception {
         ChecklistItemDTO dto = ChecklistItemDTO.builder().id(10L).texto("Item").build();
         when(service.findByTicketId(1L)).thenReturn(List.of(dto));
@@ -46,7 +46,7 @@ public class ChecklistControllerIntegrationTest {
     }
 
     @Test
-    @WithMockUser
+    @WithMockUser(roles = "ADMIN")
     public void testAddItem() throws Exception {
         ChecklistItemDTO request = ChecklistItemDTO.builder().texto("New Item").build();
         ChecklistItemDTO dto = ChecklistItemDTO.builder().id(11L).texto("New Item").build();
@@ -61,7 +61,7 @@ public class ChecklistControllerIntegrationTest {
     }
 
     @Test
-    @WithMockUser
+    @WithMockUser(roles = "ADMIN")
     public void testUpdateItem() throws Exception {
         ChecklistItemDTO request = ChecklistItemDTO.builder().texto("Updated Item").build();
         ChecklistItemDTO dto = ChecklistItemDTO.builder().id(10L).texto("Updated Item").build();
@@ -77,7 +77,7 @@ public class ChecklistControllerIntegrationTest {
     }
 
     @Test
-    @WithMockUser
+    @WithMockUser(roles = "ADMIN")
     public void testDeleteItem() throws Exception {
         doNothing().when(service).deleteItem(10L);
 
@@ -86,7 +86,7 @@ public class ChecklistControllerIntegrationTest {
     }
 
     @Test
-    @WithMockUser
+    @WithMockUser(roles = "ADMIN")
     public void testToggleItem() throws Exception {
         ChecklistItemDTO dto = ChecklistItemDTO.builder().id(10L).completado(true).build();
         when(service.toggleItem(10L)).thenReturn(dto);
@@ -97,7 +97,7 @@ public class ChecklistControllerIntegrationTest {
     }
 
     @Test
-    @WithMockUser
+    @WithMockUser(roles = "ADMIN")
     public void testReordenar() throws Exception {
         doNothing().when(service).reordenar(eq(1L), any(List.class));
 

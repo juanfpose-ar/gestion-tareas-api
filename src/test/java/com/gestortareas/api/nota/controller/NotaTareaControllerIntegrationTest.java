@@ -34,7 +34,7 @@ public class NotaTareaControllerIntegrationTest {
     private NotaTareaService service;
 
     @Test
-    @WithMockUser
+    @WithMockUser(roles = "ADMIN")
     public void testGetByTicket() throws Exception {
         NotaTareaDTO dto = NotaTareaDTO.builder().id(10L).texto("Test note").build();
         when(service.findByTicketId(1L)).thenReturn(List.of(dto));
@@ -46,7 +46,7 @@ public class NotaTareaControllerIntegrationTest {
     }
 
     @Test
-    @WithMockUser
+    @WithMockUser(roles = "ADMIN")
     public void testAddNota() throws Exception {
         NotaTareaDTO request = NotaTareaDTO.builder().texto("New note").build();
         NotaTareaDTO dto = NotaTareaDTO.builder().id(11L).texto("New note").build();
@@ -61,7 +61,7 @@ public class NotaTareaControllerIntegrationTest {
     }
 
     @Test
-    @WithMockUser
+    @WithMockUser(roles = "ADMIN")
     public void testUpdateNota() throws Exception {
         NotaTareaDTO request = NotaTareaDTO.builder().texto("Updated note").build();
         NotaTareaDTO dto = NotaTareaDTO.builder().id(10L).texto("Updated note").build();
@@ -77,7 +77,7 @@ public class NotaTareaControllerIntegrationTest {
     }
 
     @Test
-    @WithMockUser
+    @WithMockUser(roles = "ADMIN")
     public void testDeleteNota() throws Exception {
         doNothing().when(service).deleteNota(10L);
 

@@ -3,8 +3,6 @@ package com.gestortareas.api.security;
 import com.gestortareas.api.estado.repository.EstadoTableroRepository;
 import com.gestortareas.api.exceptions.EntityNotFoundException;
 import com.gestortareas.api.ticket.repository.TicketRepository;
-import com.gestortareas.api.usuario.entity.Usuario;
-import com.gestortareas.api.usuario.repository.UsuarioRepository;
 import com.gestortareas.api.version.repository.VersionRepository;
 import com.gestortareas.api.vinculo.repository.TicketVinculoRepository;
 import lombok.RequiredArgsConstructor;
@@ -23,19 +21,17 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class AccesoTableroGuard {
 
-    private final UsuarioRepository usuarioRepository;
     private final TicketRepository ticketRepository;
     private final VersionRepository versionRepository;
     private final EstadoTableroRepository estadoTableroRepository;
     private final TicketVinculoRepository ticketVinculoRepository;
+    private final MembresiaTableroCacheService membresiaTableroCacheService;
 
     public boolean puedeAccederATablero(Authentication authentication, Long tableroId) {
         if (esAdmin(authentication)) {
             return true;
         }
-        Usuario usuario = usuarioRepository.findByUsername(authentication.getName())
-                .orElseThrow(() -> new EntityNotFoundException("Usuario no encontrado: " + authentication.getName()));
-        return usuario.getTablerosAsignados().stream().anyMatch(t -> t.getId().equals(tableroId));
+        return membresiaTableroCacheService.esMiembro(authentication.getName(), tableroId);
     }
 
     public boolean puedeAccederATicket(Authentication authentication, Long ticketId) {

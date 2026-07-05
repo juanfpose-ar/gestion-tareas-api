@@ -33,7 +33,7 @@ public class VinculoControllerIntegrationTest {
     private VinculoService vinculoService;
 
     @Test
-    @WithMockUser
+    @WithMockUser(roles = "ADMIN")
     public void testCrearVinculo() throws Exception {
         VinculoRequest request = new VinculoRequest();
         request.setTicketOrigenId(1L);
@@ -52,7 +52,7 @@ public class VinculoControllerIntegrationTest {
     }
 
     @Test
-    @WithMockUser
+    @WithMockUser(roles = "ADMIN")
     public void testObtenerVinculosPorTicket() throws Exception {
         VinculoDTO dto = VinculoDTO.builder().id(10L).tipoVinculo("BLOQUEA").build();
         when(vinculoService.obtenerVinculosPorTicket(1L)).thenReturn(List.of(dto));

@@ -7,6 +7,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface TicketVinculoRepository extends JpaRepository<TicketVinculo, Long> {
@@ -15,4 +16,7 @@ public interface TicketVinculoRepository extends JpaRepository<TicketVinculo, Lo
     List<TicketVinculo> findAllByTicketId(@Param("ticketId") Long ticketId);
 
     boolean existsByTicketOrigenIdAndTicketDestinoIdAndTipoVinculo(Long origenId, Long destinoId, String tipoVinculo);
+
+    @Query("SELECT v.ticketOrigen.id FROM TicketVinculo v WHERE v.id = :vinculoId")
+    Optional<Long> findTicketOrigenIdById(@Param("vinculoId") Long vinculoId);
 }

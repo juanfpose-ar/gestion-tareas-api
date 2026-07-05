@@ -9,6 +9,7 @@ import com.gestortareas.api.usuario.dto.UsuarioDTO;
 import com.gestortareas.api.usuario.dto.UsuarioRequest;
 import com.gestortareas.api.usuario.entity.Usuario;
 import com.gestortareas.api.usuario.repository.UsuarioRepository;
+import com.gestortareas.api.security.MembresiaTableroCacheService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -26,6 +27,7 @@ public class UsuarioServiceImpl implements UsuarioService {
     private final UsuarioRepository usuarioRepository;
     private final TableroRepository tableroRepository;
     private final PasswordEncoder passwordEncoder;
+    private final MembresiaTableroCacheService membresiaTableroCacheService;
 
     @Override
     @Transactional(readOnly = true)
@@ -105,11 +107,17 @@ public class UsuarioServiceImpl implements UsuarioService {
             usuario.setPassword(passwordEncoder.encode(request.getPassword()));
         }
 
-        if (request.getTablerosIds() != null) {
+        boolean tablerosActualizados = request.getTablerosIds() != null;
+        if (tablerosActualizados) {
             usuario.setTablerosAsignados(obtenerTablerosPorIds(request.getTablerosIds()));
         }
 
         Usuario updated = usuarioRepository.save(usuario);
+
+        if (tablerosActualizados) {
+            membresiaTableroCacheService.limpiarCache();
+        }
+
         return mapToDTO(updated);
     }
 
