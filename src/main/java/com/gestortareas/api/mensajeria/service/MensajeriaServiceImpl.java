@@ -48,8 +48,7 @@ public class MensajeriaServiceImpl implements MensajeriaService {
             
             Long ultimoEmisorId = ultimo != null ? ultimo.getEmisor().getId() : null;
             String ultimoEmisorNombre = ultimo != null ? ultimo.getEmisor().getNombreCompleto() : "";
-            String fragmento = (ultimo != null && ultimo.getContenido() != null) ? 
-                (ultimo.getContenido().length() > 60 ? ultimo.getContenido().substring(0, 57) + "..." : ultimo.getContenido()) : "";
+            String fragmento = (ultimo != null && ultimo.getContenido() != null) ? ultimo.getContenido() : "";
 
             String nombresParticipantes = c.getParticipantes().stream()
                     .map(p -> p.getUsuario())
@@ -177,7 +176,7 @@ public class MensajeriaServiceImpl implements MensajeriaService {
                 savedConversacion.getAsunto(),
                 emisor.getId(),
                 emisor.getNombreCompleto(),
-                request.contenido().length() > 60 ? request.contenido().substring(0, 57) + "..." : request.contenido(),
+                request.contenido(),
                 1,
                 false,
                 savedConversacion.getFechaUltimaActividad(),
