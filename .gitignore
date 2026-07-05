@@ -25,3 +25,8 @@ replay_pid*
 
 target/*
 PRODUCCION.md
+
+# Secretos de producción — nunca comitear
+docker/prod/.env
+docker/prod/certs/*
+!docker/prod/certs/.gitkeep

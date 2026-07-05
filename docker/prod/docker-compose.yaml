@@ -1,0 +1,82 @@
+# Docker Compose de PRODUCCIÓN.
+#
+# Supuestos:
+# - gestion-tareas-api y gestion-tareas-web están clonados como carpetas hermanas
+#   (misma estructura que en desarrollo). Si más adelante usan un registry de imágenes,
+#   reemplazar el bloque "build:" del servicio gestortareas-web por "image: usuario/gestortareas-web:tag".
+# - Variables sensibles viven en un archivo .env (mismo directorio, ver .env.example) — NUNCA comitear ese .env.
+# - Los certificados de origen de Cloudflare van en ./certs/ (ver .env.example y el nginx.conf.template
+#   de gestion-tareas-web/docker/prod/, que es el que se monta abajo).
+#
+# Uso: docker compose --env-file .env up -d
+
+services:
+  gestortareas-db:
+    image: postgres:16-alpine
+    container_name: gestortareas-db-prod
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - postgres_data_prod:/var/lib/postgresql/data
+      - ../../src/main/resources/db/init_gestorTareas.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - gestortareas-net-prod
+    # Sin "ports": la DB solo es alcanzable dentro de la red de Docker, nunca expuesta al host.
+
+  gestortareas-api:
+    image: gestortareas/api:${API_TAG:-latest}
+    container_name: gestortareas-api-prod
+    restart: unless-stopped
+    depends_on:
+      - gestortareas-db
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://gestortareas-db:5432/${POSTGRES_DB}?currentSchema=gestortareas
+      SPRING_DATASOURCE_DRIVER: org.postgresql.Driver
+      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER}
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD}
+      APP_JWT_SECRET: ${APP_JWT_SECRET}
+      APP_CORS_ALLOWED_ORIGINS: ${APP_CORS_ALLOWED_ORIGINS}
+      APP_COOKIE_SECURE: "true"
+      APP_COOKIE_SAME_SITE: Strict
+      SMTP_HOST: ${SMTP_HOST}
+      SMTP_PORT: ${SMTP_PORT}
+      SMTP_USERNAME: ${SMTP_USERNAME}
+      SMTP_PASSWORD: ${SMTP_PASSWORD}
+      SMTP_AUTH: "true"
+      SMTP_STARTTLS: "true"
+      MAIL_FROM: ${MAIL_FROM}
+      DIGEST_CRON_MEDIODIA: ${DIGEST_CRON_MEDIODIA:-0 0 12 * * *}
+      DIGEST_CRON_NOCHE: ${DIGEST_CRON_NOCHE:-0 0 19 * * *}
+    networks:
+      - gestortareas-net-prod
+    # Sin "ports": solo gestortareas-web (nginx) le habla, por la red interna.
+
+  gestortareas-web:
+    build:
+      context: ../../../gestion-tareas-web
+      dockerfile: Dockerfile
+    image: gestortareas/web:${WEB_TAG:-latest}
+    container_name: gestortareas-web-prod
+    restart: unless-stopped
+    depends_on:
+      - gestortareas-api
+    environment:
+      API_UPSTREAM: gestortareas-api:8080
+    volumes:
+      - ../../../gestion-tareas-web/docker/prod/nginx.conf.template:/etc/nginx/templates/default.conf.template:ro
+      - ./certs:/etc/nginx/certs:ro
+    ports:
+      - "80:80"
+      - "443:443"
+    networks:
+      - gestortareas-net-prod
+
+networks:
+  gestortareas-net-prod:
+    driver: bridge
+
+volumes:
+  postgres_data_prod:
