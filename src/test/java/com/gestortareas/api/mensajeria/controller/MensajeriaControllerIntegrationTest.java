@@ -46,7 +46,8 @@ public class MensajeriaControllerIntegrationTest {
                 false,
                 LocalDateTime.now(),
                 false,
-                "Destinatario"
+                "Destinatario",
+                false
         );
 
         when(mensajeriaService.obtenerBandeja("emisor")).thenReturn(List.of(resumen));
@@ -92,7 +93,8 @@ public class MensajeriaControllerIntegrationTest {
                 false,
                 LocalDateTime.now(),
                 false,
-                "Destinatario"
+                "Destinatario",
+                false
         );
 
         when(mensajeriaService.crearConversacion(any(NuevaConversacionRequest.class), eq("emisor"))).thenReturn(resumen);
@@ -130,7 +132,7 @@ public class MensajeriaControllerIntegrationTest {
     @Test
     @WithMockUser(username = "emisor")
     public void testActualizarEstado_Retorna204() throws Exception {
-        ActualizarEstadoRequest request = new ActualizarEstadoRequest(true, false);
+        ActualizarEstadoRequest request = new ActualizarEstadoRequest(true, false, null, null);
 
         mockMvc.perform(patch("/api/mensajeria/conversaciones/1/estado")
                 .contentType(MediaType.APPLICATION_JSON)

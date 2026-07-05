@@ -140,7 +140,7 @@ public class MensajeriaServiceImplTest {
 
     @Test
     public void testActualizarEstado_Exitoso() {
-        ActualizarEstadoRequest request = new ActualizarEstadoRequest(true, false);
+        ActualizarEstadoRequest request = new ActualizarEstadoRequest(true, false, null, null);
 
         Conversacion conversacion = Conversacion.builder()
                 .id(10L)
