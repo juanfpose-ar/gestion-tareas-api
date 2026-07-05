@@ -50,6 +50,9 @@ services:
       MAIL_FROM: ${MAIL_FROM}
       DIGEST_CRON_MEDIODIA: ${DIGEST_CRON_MEDIODIA:-0 0 12 * * *}
       DIGEST_CRON_NOCHE: ${DIGEST_CRON_NOCHE:-0 0 19 * * *}
+      UPLOADS_DIR: /data/uploads
+    volumes:
+      - uploads_data_prod:/data/uploads
     networks:
       - gestortareas-net-prod
     # Sin "ports": solo gestortareas-web (nginx) le habla, por la red interna.
@@ -80,3 +83,4 @@ networks:
 
 volumes:
   postgres_data_prod:
+  uploads_data_prod:

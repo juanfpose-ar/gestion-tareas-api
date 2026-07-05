@@ -44,6 +44,9 @@ services:
       # Horarios del digest de novedades (formato cron de Spring). Default: 12:00 y 19:00.
       DIGEST_CRON_MEDIODIA: "0 0 12 * * *"
       DIGEST_CRON_NOCHE: "0 0 19 * * *"
+      UPLOADS_DIR: /data/uploads
+    volumes:
+      - uploads_data:/data/uploads
     ports:
       - "8081:8080"
     networks:
@@ -68,3 +71,4 @@ networks:
 
 volumes:
   postgres_data:
+  uploads_data:
