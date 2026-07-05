@@ -43,4 +43,8 @@ public class UsuarioConversacion {
     @Column(nullable = false)
     @Builder.Default
     private boolean eliminada = false;
+
+    @Column(nullable = false)
+    @Builder.Default
+    private boolean destacada = false;
 }

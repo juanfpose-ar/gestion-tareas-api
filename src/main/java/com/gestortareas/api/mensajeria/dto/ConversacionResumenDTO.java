@@ -12,5 +12,6 @@ public record ConversacionResumenDTO(
     boolean tieneNoLeidos,
     LocalDateTime fechaUltimaActividad,
     boolean archivada,
-    String nombresParticipantes
+    String nombresParticipantes,
+    boolean destacada
 ) {}

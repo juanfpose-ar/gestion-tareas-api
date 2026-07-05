@@ -2,5 +2,7 @@ package com.gestortareas.api.mensajeria.dto;
 
 public record ActualizarEstadoRequest(
     Boolean archivada,
-    Boolean eliminada
+    Boolean eliminada,
+    Boolean leida,
+    Boolean destacada
 ) {}

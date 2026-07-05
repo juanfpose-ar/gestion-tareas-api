@@ -490,41 +490,41 @@ INSERT INTO gestortareas.mensajes (id, conversacion_id, emisor_id, contenido, fe
   (23, 8, 7, 'Sí, el problema está en el componente TableRow. Cada hover triggerea un render de toda la tabla.',          NOW() - INTERVAL '1 HOUR' - INTERVAL '30 MINUTE'),
   (24, 8, 2, 'Exacto. Voy a implementar React.memo en TableRow y useCallback en los handlers. Lo pruebo y te aviso.',     NOW() - INTERVAL '1 HOUR');
 
-INSERT INTO gestortareas.usuario_conversacion (usuario_id, conversacion_id, leida, archivada, eliminada) VALUES
-  -- Conv 1: admin ↔ maría  (admin no leyó)
-  (1, 1, false, false, false),
-  (2, 1, true,  false, false),
+INSERT INTO gestortareas.usuario_conversacion (usuario_id, conversacion_id, leida, archivada, eliminada, destacada) VALUES
+  -- Conv 1: admin ↔ maría  (admin no leyó, admin la destacó)
+  (1, 1, false, false, false, true),
+  (2, 1, true,  false, false, false),
 
   -- Conv 2: admin ↔ lucas
-  (1, 2, true,  false, false),
-  (3, 2, true,  false, false),
+  (1, 2, true,  false, false, false),
+  (3, 2, true,  false, false, false),
 
   -- Conv 3: admin ↔ valentina  (admin archivó)
-  (1, 3, true,  true,  false),
-  (4, 3, true,  false, false),
+  (1, 3, true,  true,  false, false),
+  (4, 3, true,  false, false, false),
 
-  -- Conv 4: admin + lucas + maría
-  (1, 4, true,  false, false),
-  (2, 4, true,  false, false),
-  (3, 4, true,  false, false),
+  -- Conv 4: admin + lucas + maría  (admin la destacó)
+  (1, 4, true,  false, false, true),
+  (2, 4, true,  false, false, false),
+  (3, 4, true,  false, false, false),
 
   -- Conv 5: admin + sofía + diego  (sofía no leyó el último)
-  (1, 5, true,  false, false),
-  (5, 5, false, false, false),
-  (6, 5, true,  false, false),
+  (1, 5, true,  false, false, false),
+  (5, 5, false, false, false, false),
+  (6, 5, true,  false, false, false),
 
   -- Conv 6: carlos + admin + maría
-  (7, 6, true,  false, false),
-  (1, 6, true,  false, false),
-  (2, 6, true,  false, false),
+  (7, 6, true,  false, false, false),
+  (1, 6, true,  false, false, false),
+  (2, 6, true,  false, false, false),
 
   -- Conv 7: sofía ↔ lucas
-  (5, 7, true,  false, false),
-  (3, 7, true,  false, false),
+  (5, 7, true,  false, false, false),
+  (3, 7, true,  false, false, false),
 
   -- Conv 8: maría ↔ carlos  (carlos no leyó)
-  (2, 8, true,  false, false),
-  (7, 8, false, false, false);
+  (2, 8, true,  false, false, false),
+  (7, 8, false, false, false, false);
 
 -- ── 15. Actualizar secuencias ─────────────────────────────────
 SELECT setval('gestortareas.usuarios_id_seq',            (SELECT MAX(id) FROM gestortareas.usuarios));

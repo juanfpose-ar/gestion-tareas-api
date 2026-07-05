@@ -69,7 +69,8 @@ public class MensajeriaServiceImpl implements MensajeriaService {
                 !uc.isLeida(),
                 c.getFechaUltimaActividad(),
                 uc.isArchivada(),
-                nombresParticipantes
+                nombresParticipantes,
+                uc.isDestacada()
             );
         }).collect(Collectors.toList());
     }
@@ -181,7 +182,8 @@ public class MensajeriaServiceImpl implements MensajeriaService {
                 false,
                 savedConversacion.getFechaUltimaActividad(),
                 false,
-                nombresParticipantes
+                nombresParticipantes,
+                false
         );
     }
 
@@ -264,6 +266,12 @@ public class MensajeriaServiceImpl implements MensajeriaService {
         }
         if (request.eliminada() != null) {
             uc.setEliminada(request.eliminada());
+        }
+        if (request.leida() != null) {
+            uc.setLeida(request.leida());
+        }
+        if (request.destacada() != null) {
+            uc.setDestacada(request.destacada());
         }
         usuarioConversacionRepository.save(uc);
     }
