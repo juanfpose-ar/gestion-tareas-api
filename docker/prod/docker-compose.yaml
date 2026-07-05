@@ -51,6 +51,8 @@ services:
       DIGEST_CRON_MEDIODIA: ${DIGEST_CRON_MEDIODIA:-0 0 12 * * *}
       DIGEST_CRON_NOCHE: ${DIGEST_CRON_NOCHE:-0 0 19 * * *}
       UPLOADS_DIR: /data/uploads
+      # Horas que se cachea si un usuario pertenece a un tablero (AccesoTableroGuard).
+      MEMBRESIA_TABLERO_CACHE_TTL_HORAS: ${MEMBRESIA_TABLERO_CACHE_TTL_HORAS:-6}
     volumes:
       - uploads_data_prod:/data/uploads
     networks:
