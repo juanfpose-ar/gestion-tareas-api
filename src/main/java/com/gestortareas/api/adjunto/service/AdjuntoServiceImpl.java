@@ -1,7 +1,6 @@
 package com.gestortareas.api.adjunto.service;
 
 import java.util.List;
-import java.util.UUID;
 
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -11,6 +10,7 @@ import com.gestortareas.api.adjunto.dto.EnlaceRequest;
 import com.gestortareas.api.adjunto.entity.Adjunto;
 import com.gestortareas.api.adjunto.repository.AdjuntoRepository;
 import com.gestortareas.api.enums.TipoAdjunto;
+import com.gestortareas.api.exceptions.BusinessValidationException;
 import com.gestortareas.api.exceptions.EntityNotFoundException;
 import com.gestortareas.api.ticket.entity.Ticket;
 import com.gestortareas.api.ticket.repository.TicketRepository;
@@ -27,6 +27,7 @@ public class AdjuntoServiceImpl implements AdjuntoService {
 
     private final AdjuntoRepository adjuntoRepository;
     private final TicketRepository ticketRepository;
+    private final FileStorageService fileStorageService;
 
     @Override
     public List<AdjuntoDTO> findByTicketId(Long ticketId) {
@@ -38,13 +39,15 @@ public class AdjuntoServiceImpl implements AdjuntoService {
     public AdjuntoDTO uploadArchivo(Long ticketId, MultipartFile file) {
         Ticket ticket = ticketRepository.findById(ticketId)
                 .orElseThrow(() -> new EntityNotFoundException("Ticket no encontrado: " + ticketId));
-        String storedUrl = "https://storage.cala.internal/adjuntos/" + UUID.randomUUID() + "/" +
-                file.getOriginalFilename();
+
+        String rutaRelativa = fileStorageService.guardar(ticketId, file);
+
         Adjunto adjunto = new Adjunto();
         adjunto.setTicket(ticket);
         adjunto.setTipo(TipoAdjunto.ARCHIVO);
-        adjunto.setUrl(storedUrl);
         adjunto.setNombre(file.getOriginalFilename());
+        adjunto.setRutaAlmacenamiento(rutaRelativa);
+        adjunto.setContentType(file.getContentType());
         return adjuntoRepository.save(adjunto).toDTO();
     }
 
@@ -52,19 +55,41 @@ public class AdjuntoServiceImpl implements AdjuntoService {
     public AdjuntoDTO addEnlace(Long ticketId, EnlaceRequest request) {
         Ticket ticket = ticketRepository.findById(ticketId)
                 .orElseThrow(() -> new EntityNotFoundException("Ticket no encontrado: " + ticketId));
+
+        String url = request.getUrl().trim();
+        if (!url.startsWith("http://") && !url.startsWith("https://")) {
+            throw new BusinessValidationException("La URL debe empezar con http:// o https://");
+        }
+
         Adjunto adjunto = new Adjunto();
         adjunto.setTicket(ticket);
         adjunto.setTipo(TipoAdjunto.ENLACE);
-        adjunto.setUrl(request.getUrl());
+        adjunto.setUrl(url);
         adjunto.setNombre(request.getNombre());
         return adjuntoRepository.save(adjunto).toDTO();
     }
 
     @Override
-    public void deleteAdjunto(Long adjuntoId) {
-        if (!adjuntoRepository.existsById(adjuntoId)) {
-            throw new EntityNotFoundException("Adjunto no encontrado: " + adjuntoId);
+    public void deleteAdjunto(Long ticketId, Long adjuntoId) {
+        Adjunto adjunto = adjuntoRepository.findByIdAndTicketId(adjuntoId, ticketId)
+                .orElseThrow(() -> new EntityNotFoundException("Adjunto no encontrado: " + adjuntoId));
+        if (adjunto.getTipo() == TipoAdjunto.ARCHIVO) {
+            fileStorageService.eliminar(adjunto.getRutaAlmacenamiento());
         }
-        adjuntoRepository.deleteById(adjuntoId);
+        adjuntoRepository.delete(adjunto);
+    }
+
+    @Override
+    public ArchivoDescargable descargarArchivo(Long ticketId, Long adjuntoId) {
+        Adjunto adjunto = adjuntoRepository.findByIdAndTicketId(adjuntoId, ticketId)
+                .orElseThrow(() -> new EntityNotFoundException("Adjunto no encontrado: " + adjuntoId));
+        if (adjunto.getTipo() != TipoAdjunto.ARCHIVO) {
+            throw new BusinessValidationException("Este adjunto no es un archivo descargable");
+        }
+        return new ArchivoDescargable(
+                fileStorageService.cargar(adjunto.getRutaAlmacenamiento()),
+                adjunto.getNombre(),
+                adjunto.getContentType()
+        );
     }
 }

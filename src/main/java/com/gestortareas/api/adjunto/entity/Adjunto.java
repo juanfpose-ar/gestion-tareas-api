@@ -42,7 +42,8 @@ public class Adjunto {
     @Column(nullable = false, length = 10)
     private TipoAdjunto tipo;
 
-    @Column(nullable = false, length = 500)
+    /** Solo para tipo ENLACE: la URL externa. Para ARCHIVO queda null (ver toDTO). */
+    @Column(length = 500)
     private String url;
 
     @Column(length = 255)
@@ -51,11 +52,22 @@ public class Adjunto {
     @Column(nullable = false)
     private LocalDateTime fechaSubida = LocalDateTime.now();
 
+    /** Solo para tipo ARCHIVO: ruta relativa dentro del directorio de uploads. */
+    @Column(name = "ruta_almacenamiento", length = 500)
+    private String rutaAlmacenamiento;
+
+    /** Solo para tipo ARCHIVO: content-type original, usado al servir la descarga. */
+    @Column(name = "content_type", length = 150)
+    private String contentType;
+
     public AdjuntoDTO toDTO() {
+        String urlFinal = this.tipo == TipoAdjunto.ARCHIVO
+                ? "/api/tickets/" + this.ticket.getId() + "/adjuntos/" + this.id + "/archivo"
+                : this.url;
         return AdjuntoDTO.builder()
                 .id(this.id)
                 .tipo(this.tipo)
-                .url(this.url)
+                .url(urlFinal)
                 .nombre(this.nombre)
                 .fechaSubida(this.fechaSubida)
                 .build();

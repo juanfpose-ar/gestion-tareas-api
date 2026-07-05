@@ -1,20 +1,17 @@
 CREATE SCHEMA IF NOT EXISTS gestortareas;
 SET SCHEMA gestortareas;
 
-CREATE TABLE IF NOT EXISTS usuarios (
-    id BIGINT AUTO_INCREMENT PRIMARY KEY,
-    username VARCHAR(50) NOT NULL UNIQUE,
-    nombre VARCHAR(100) NOT NULL,
-    email VARCHAR(100) NOT NULL UNIQUE,
-    password VARCHAR(255) NOT NULL,
-    rol VARCHAR(20) NOT NULL DEFAULT 'USER'
-);
+-- La tabla "usuarios" la crea Hibernate (ddl-auto=update) a partir de la entidad Usuario,
+-- y DataSeeder inserta el usuario "admin" vía JPA — así el esquema real nunca queda
+-- desincronizado con este fixture cuando la entidad cambia (columnas nuevas, NOT NULL, etc).
 
 CREATE TABLE IF NOT EXISTS tableros (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
-    nombre VARCHAR(100) NOT NULL,
-    descripcion VARCHAR(255),
+    titulo VARCHAR(100) NOT NULL,
+    descripcion VARCHAR(500),
+    imagen_fondo_url VARCHAR(500),
     creador_id BIGINT,
+    archivado BOOLEAN NOT NULL DEFAULT FALSE,
     fecha_creacion TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -47,6 +44,7 @@ CREATE TABLE IF NOT EXISTS tickets (
     tablero_id BIGINT NOT NULL,
     estado_id BIGINT NOT NULL,
     archivado BOOLEAN NOT NULL DEFAULT FALSE,
+    completado BOOLEAN NOT NULL DEFAULT FALSE,
     fecha_archivado TIMESTAMP,
     fecha_vencimiento TIMESTAMP,
     fecha_creacion TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
