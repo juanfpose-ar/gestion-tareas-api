@@ -2,7 +2,8 @@
 set -e
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" &>/dev/null && pwd)"
-PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." &>/dev/null && pwd)"
+COMPOSE_DIR="$(cd "$SCRIPT_DIR/.." &>/dev/null && pwd)"       # docker/dev — donde vive docker-compose.yaml
+REPO_ROOT="$(cd "$SCRIPT_DIR/../../.." &>/dev/null && pwd)"   # raíz del repo — donde vive pom.xml
 
 # ── Opciones ─────────────────────────────────────────────────────
 # Pasá --no-seed para omitir la carga de datos de prueba
@@ -17,19 +18,19 @@ echo "=================================================="
 
 echo ""
 echo ">>> Paso 1: Limpiando contenedores, volúmenes e imágenes..."
-cd "$PROJECT_ROOT"
+cd "$COMPOSE_DIR"
 docker compose down -v --remove-orphans
 docker rmi gestortareas/api:latest 2>/dev/null || true
 
 echo ""
 echo ">>> Paso 2: Construyendo imagen Docker de la API con Jib..."
-cd "$PROJECT_ROOT"
+cd "$REPO_ROOT"
 mvn clean compile jib:dockerBuild -DskipTests
 
 echo ""
-echo ">>> Paso 3: Desplegando servicios de Backend (DB y API)..."
-cd "$PROJECT_ROOT"
-docker compose up -d gestortareas-db gestortareas-api
+echo ">>> Paso 3: Desplegando servicios de Backend (DB, Mailhog y API)..."
+cd "$COMPOSE_DIR"
+docker compose up -d gestortareas-db gestortareas-mailhog gestortareas-api
 
 echo ""
 echo "=== Estado de los contenedores desplegados ==="

@@ -1,0 +1,70 @@
+version: '3.8'
+
+services:
+  gestortareas-db:
+    image: postgres:16-alpine
+    container_name: gestortareas-db
+    restart: always
+    environment:
+      POSTGRES_DB: gestortareasdb
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgrespassword
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ../../src/main/resources/db/init_gestorTareas.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - gestortareas-net
+
+  gestortareas-mailhog:
+    image: mailhog/mailhog
+    container_name: gestortareas-mailhog
+    restart: always
+    ports:
+      - "8025:8025" # UI web: http://localhost:8025
+      - "1025:1025" # SMTP
+    networks:
+      - gestortareas-net
+
+  gestortareas-api:
+    image: gestortareas/api
+    container_name: gestortareas-api
+    restart: always
+    depends_on:
+      - gestortareas-db
+      - gestortareas-mailhog
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://gestortareas-db:5432/gestortareasdb?currentSchema=gestortareas
+      SPRING_DATASOURCE_DRIVER: org.postgresql.Driver
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: postgrespassword
+      SMTP_HOST: gestortareas-mailhog
+      SMTP_PORT: 1025
+      # Horarios del digest de novedades (formato cron de Spring). Default: 12:00 y 19:00.
+      DIGEST_CRON_MEDIODIA: "0 0 12 * * *"
+      DIGEST_CRON_NOCHE: "0 0 19 * * *"
+    ports:
+      - "8081:8080"
+    networks:
+      - gestortareas-net
+  # gestortareas-web:
+  #   build:
+  #     context: ./frontend
+  #     dockerfile: Dockerfile
+  #   image: gestortareas/frontend:latest
+  #   container_name: gestortareas-web
+  #   restart: always
+  #   depends_on:
+  #     - gestortareas-api
+  #   ports:
+  #     - "80:80"
+  #   networks:
+  #     - gestortareas-net
+
+networks:
+  gestortareas-net:
+    driver: bridge
+
+volumes:
+  postgres_data:
