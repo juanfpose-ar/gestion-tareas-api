@@ -9,8 +9,7 @@ import com.gestortareas.api.ticket.entity.Ticket;
 import com.gestortareas.api.ticket.repository.TicketRepository;
 import com.gestortareas.api.usuario.entity.Usuario;
 import com.gestortareas.api.usuario.repository.UsuarioRepository;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
@@ -26,9 +25,9 @@ import java.util.List;
  * a las 00:00 y 19:00. Solo se envía si el usuario tiene algo nuevo desde el último envío.
  */
 @Service
+@Log4j2
 public class DigestService {
 
-    private static final Logger log = LoggerFactory.getLogger(DigestService.class);
     private static final DateTimeFormatter FMT = DateTimeFormatter.ofPattern("dd/MM HH:mm");
 
     @Autowired
@@ -51,11 +50,13 @@ public class DigestService {
 
     @Scheduled(cron = "${app.digest.cron.mediodia}")
     public void digestMediodia() {
+        log.info("Cron digestMediodia disparado");
         enviarDigestATodos();
     }
 
     @Scheduled(cron = "${app.digest.cron.noche}")
     public void digestNoche() {
+        log.info("Cron digestNoche disparado");
         enviarDigestATodos();
     }
 
@@ -63,24 +64,36 @@ public class DigestService {
     public void enviarDigestATodos() {
         LocalDateTime ahora = LocalDateTime.now();
         List<Usuario> usuarios = usuarioRepository.findByActivoTrue();
+        log.info("Iniciando envío de digest: {} usuario(s) activo(s)", usuarios.size());
 
         // Reuniones candidatas: rango amplio, se filtra el recordatorio exacto por usuario más abajo
         List<Reunion> reunionesCercanas = reunionRepository.findByFechaBetween(
                 ahora.toLocalDate().minusDays(1), ahora.toLocalDate().plusDays(2));
 
+        int enviados = 0;
+        int sinEmail = 0;
+        int errores = 0;
+
         for (Usuario usuario : usuarios) {
             if (usuario.getEmail() == null || usuario.getEmail().isBlank()) {
+                sinEmail++;
                 continue;
             }
             try {
-                procesarUsuario(usuario, ahora, reunionesCercanas);
+                if (procesarUsuario(usuario, ahora, reunionesCercanas)) {
+                    enviados++;
+                }
             } catch (Exception e) {
+                errores++;
                 log.error("Error generando digest para {}: {}", usuario.getUsername(), e.getMessage());
             }
         }
+
+        log.info("Digest finalizado: {} enviado(s), {} sin novedades, {} sin email, {} con error (de {} activos)",
+                enviados, usuarios.size() - enviados - sinEmail - errores, sinEmail, errores, usuarios.size());
     }
 
-    private void procesarUsuario(Usuario usuario, LocalDateTime ahora, List<Reunion> reunionesCercanas) {
+    private boolean procesarUsuario(Usuario usuario, LocalDateTime ahora, List<Reunion> reunionesCercanas) {
         LocalDateTime desde = usuario.getUltimoDigestEnviado() != null
                 ? usuario.getUltimoDigestEnviado()
                 : ahora.minusHours(24);
@@ -117,16 +130,22 @@ public class DigestService {
                 || mensajesSinLeer > 0;
 
         if (!hayNovedades) {
-            return;
+            log.debug("Sin novedades para {}, no se envía digest", usuario.getUsername());
+            return false;
         }
 
         String cuerpo = construirCuerpo(usuario, ticketsActualizados, ticketsVencidos,
                 recordatoriosVencidos, reunionesConRecordatorio, mensajesSinLeer);
 
         mailService.enviar(usuario.getEmail(), "GestorTareas — Tenés novedades", cuerpo);
+        log.info("Digest enviado a {} ({} ticket(s) actualizado(s), {} vencido(s), {} recordatorio(s), "
+                        + "{} reunión(es), {} mensaje(s) sin leer)",
+                usuario.getUsername(), ticketsActualizados.size(), ticketsVencidos.size(),
+                recordatoriosVencidos.size(), reunionesConRecordatorio.size(), mensajesSinLeer);
 
         usuario.setUltimoDigestEnviado(ahora);
         usuarioRepository.save(usuario);
+        return true;
     }
 
     private LocalDateTime calcularRecordatorioReunion(Reunion r) {
