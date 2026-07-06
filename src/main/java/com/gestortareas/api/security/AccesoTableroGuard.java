@@ -1,7 +1,10 @@
 package com.gestortareas.api.security;
 
 import com.gestortareas.api.estado.repository.EstadoTableroRepository;
+import com.gestortareas.api.etiqueta.entity.Etiqueta;
+import com.gestortareas.api.etiqueta.repository.EtiquetaRepository;
 import com.gestortareas.api.exceptions.EntityNotFoundException;
+import com.gestortareas.api.reunion.repository.ReunionRepository;
 import com.gestortareas.api.ticket.repository.TicketRepository;
 import com.gestortareas.api.version.repository.VersionRepository;
 import com.gestortareas.api.vinculo.repository.TicketVinculoRepository;
@@ -25,6 +28,8 @@ public class AccesoTableroGuard {
     private final VersionRepository versionRepository;
     private final EstadoTableroRepository estadoTableroRepository;
     private final TicketVinculoRepository ticketVinculoRepository;
+    private final ReunionRepository reunionRepository;
+    private final EtiquetaRepository etiquetaRepository;
     private final MembresiaTableroCacheService membresiaTableroCacheService;
 
     public boolean puedeAccederATablero(Authentication authentication, Long tableroId) {
@@ -68,6 +73,44 @@ public class AccesoTableroGuard {
         Long ticketOrigenId = ticketVinculoRepository.findTicketOrigenIdById(vinculoId)
                 .orElseThrow(() -> new EntityNotFoundException("Vínculo no encontrado: " + vinculoId));
         return puedeAccederATicket(authentication, ticketOrigenId);
+    }
+
+    public boolean puedeAccederAReunion(Authentication authentication, Long reunionId) {
+        if (esAdmin(authentication)) {
+            return true;
+        }
+        Long tableroId = reunionRepository.findTableroIdByReunionId(reunionId)
+                .orElseThrow(() -> new EntityNotFoundException("Reunión no encontrada: " + reunionId));
+        return puedeAccederATablero(authentication, tableroId);
+    }
+
+    /**
+     * Etiquetas: las que tienen tablero siguen la regla de membresía; las globales
+     * (tablero null) solo las gestiona un ADMIN.
+     */
+    public boolean puedeAccederAEtiqueta(Authentication authentication, Long etiquetaId) {
+        if (esAdmin(authentication)) {
+            return true;
+        }
+        Etiqueta etiqueta = etiquetaRepository.findById(etiquetaId)
+                .orElseThrow(() -> new EntityNotFoundException("Etiqueta no encontrada: " + etiquetaId));
+        if (etiqueta.getTablero() == null) {
+            return false;
+        }
+        return puedeAccederATablero(authentication, etiqueta.getTablero().getId());
+    }
+
+    /**
+     * Para crear etiquetas: con tableroId aplica membresía; sin tableroId (global) solo ADMIN.
+     */
+    public boolean puedeCrearEtiqueta(Authentication authentication, Long tableroId) {
+        if (esAdmin(authentication)) {
+            return true;
+        }
+        if (tableroId == null) {
+            return false;
+        }
+        return puedeAccederATablero(authentication, tableroId);
     }
 
     private boolean esAdmin(Authentication authentication) {

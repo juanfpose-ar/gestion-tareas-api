@@ -10,6 +10,7 @@ import com.gestortareas.api.usuario.dto.UsuarioRequest;
 import com.gestortareas.api.usuario.entity.Usuario;
 import com.gestortareas.api.usuario.repository.UsuarioRepository;
 import com.gestortareas.api.security.MembresiaTableroCacheService;
+import com.gestortareas.api.security.PasswordPolicy;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -31,9 +32,9 @@ public class UsuarioServiceImpl implements UsuarioService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<UsuarioDTO> listarTodos() {
+    public List<UsuarioDTO> listarTodos(boolean incluirDatosSensibles) {
         return usuarioRepository.findAll().stream()
-                .map(this::mapToDTO)
+                .map(u -> incluirDatosSensibles ? mapToDTO(u) : mapToDTOReducido(u))
                 .collect(Collectors.toList());
     }
 
@@ -62,6 +63,7 @@ public class UsuarioServiceImpl implements UsuarioService {
         if (request.getPassword() == null || request.getPassword().isBlank()) {
             throw new BusinessValidationException("La contraseña es obligatoria para crear un usuario");
         }
+        PasswordPolicy.validar(request.getPassword());
 
         Set<Tablero> tableros = obtenerTablerosPorIds(request.getTablerosIds());
 
@@ -104,6 +106,7 @@ public class UsuarioServiceImpl implements UsuarioService {
         }
 
         if (request.getPassword() != null && !request.getPassword().isBlank()) {
+            PasswordPolicy.validar(request.getPassword());
             usuario.setPassword(passwordEncoder.encode(request.getPassword()));
         }
 
@@ -136,6 +139,7 @@ public class UsuarioServiceImpl implements UsuarioService {
     @Override
     @Transactional
     public void blanquearPassword(Long id, String passwordNueva) {
+        PasswordPolicy.validar(passwordNueva);
         Usuario usuario = usuarioRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Usuario no encontrado con ID: " + id));
         usuario.setPassword(passwordEncoder.encode(passwordNueva));
@@ -156,6 +160,18 @@ public class UsuarioServiceImpl implements UsuarioService {
             return new HashSet<>();
         }
         return new HashSet<>(tableroRepository.findAllById(ids));
+    }
+
+    /** Sin email ni tableros asignados: es lo que ve un usuario común al listar el directorio. */
+    private UsuarioDTO mapToDTOReducido(Usuario u) {
+        return UsuarioDTO.builder()
+                .id(u.getId())
+                .username(u.getUsername())
+                .nombreCompleto(u.getNombreCompleto())
+                .rol(u.getRol())
+                .activo(u.isActivo())
+                .colorAvatar(u.getColorAvatar() != null ? u.getColorAvatar() : "#0d6efd")
+                .build();
     }
 
     private UsuarioDTO mapToDTO(Usuario u) {

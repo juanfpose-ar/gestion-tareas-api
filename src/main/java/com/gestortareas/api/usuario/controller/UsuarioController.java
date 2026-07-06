@@ -9,6 +9,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -20,9 +22,13 @@ public class UsuarioController {
 
     private final UsuarioService usuarioService;
 
+    // Abierto a cualquier autenticado porque la mensajería y la asignación de tickets
+    // necesitan el directorio; los no-admin reciben el DTO reducido (sin email ni tableros).
     @GetMapping
-    public ResponseEntity<List<UsuarioDTO>> listarTodos() {
-        return ResponseEntity.ok(usuarioService.listarTodos());
+    public ResponseEntity<List<UsuarioDTO>> listarTodos(@AuthenticationPrincipal UserDetails userDetails) {
+        boolean esAdmin = userDetails != null && userDetails.getAuthorities().stream()
+                .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
+        return ResponseEntity.ok(usuarioService.listarTodos(esAdmin));
     }
 
     @GetMapping("/{id}")

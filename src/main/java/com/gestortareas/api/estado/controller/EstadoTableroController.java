@@ -7,6 +7,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -19,22 +20,26 @@ public class EstadoTableroController {
     private final EstadoTableroService estadoService;
 
     @GetMapping("/tablero/{tableroId}")
+    @PreAuthorize("@accesoTableroGuard.puedeAccederATablero(authentication, #tableroId)")
     public ResponseEntity<List<EstadoTableroDTO>> listarPorTablero(@PathVariable Long tableroId) {
         return ResponseEntity.ok(estadoService.listarPorTablero(tableroId));
     }
 
     @PostMapping
+    @PreAuthorize("@accesoTableroGuard.puedeAccederATablero(authentication, #request.tableroId)")
     public ResponseEntity<EstadoTableroDTO> crearEstado(@Valid @RequestBody EstadoTableroRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED).body(estadoService.crearEstado(request));
     }
 
     @PutMapping("/{id}")
+    @PreAuthorize("@accesoTableroGuard.puedeAccederAEstado(authentication, #id)")
     public ResponseEntity<EstadoTableroDTO> actualizarEstado(@PathVariable Long id,
             @Valid @RequestBody EstadoTableroRequest request) {
         return ResponseEntity.ok(estadoService.actualizarEstado(id, request));
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("@accesoTableroGuard.puedeAccederAEstado(authentication, #id)")
     public ResponseEntity<Void> eliminarEstado(@PathVariable Long id) {
         estadoService.eliminarEstado(id);
         return ResponseEntity.noContent().build();

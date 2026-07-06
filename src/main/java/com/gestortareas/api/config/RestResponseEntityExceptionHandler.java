@@ -62,6 +62,13 @@ public class RestResponseEntityExceptionHandler {
         return buildError(HttpStatus.CONFLICT, ex.getMessage(), request);
     }
 
+    @ExceptionHandler(com.gestortareas.api.exceptions.TooManyRequestsException.class)
+    public ResponseEntity<Map<String, Object>> handleTooManyRequests(
+            com.gestortareas.api.exceptions.TooManyRequestsException ex, HttpServletRequest request) {
+        log.warn("Rate limit: {}", ex.getMessage());
+        return buildError(HttpStatus.TOO_MANY_REQUESTS, ex.getMessage(), request);
+    }
+
     @ExceptionHandler(BusinessValidationException.class)
     public ResponseEntity<Map<String, Object>> handleBusinessValidation(
             BusinessValidationException ex, HttpServletRequest request) {

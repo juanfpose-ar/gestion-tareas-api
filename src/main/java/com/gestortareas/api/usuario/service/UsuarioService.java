@@ -6,7 +6,11 @@ import com.gestortareas.api.usuario.dto.UsuarioRequest;
 import java.util.List;
 
 public interface UsuarioService {
-    List<UsuarioDTO> listarTodos();
+    /**
+     * @param incluirDatosSensibles con false (usuarios no-admin) el DTO omite email y
+     *        tableros asignados — solo lo mínimo para elegir destinatarios/asignados en la UI.
+     */
+    List<UsuarioDTO> listarTodos(boolean incluirDatosSensibles);
     UsuarioDTO obtenerPorId(Long id);
     UsuarioDTO obtenerPorUsername(String username);
     UsuarioDTO crearUsuario(UsuarioRequest request);

@@ -10,6 +10,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
@@ -32,56 +33,48 @@ public class TableroController {
     }
 
     @GetMapping("/admin/todos")
-    public ResponseEntity<List<TableroDTO>> listarTodos(@AuthenticationPrincipal UserDetails userDetails) {
-        boolean esAdmin = userDetails.getAuthorities().stream()
-                .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
-        if (!esAdmin) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
-        }
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<List<TableroDTO>> listarTodos() {
         return ResponseEntity.ok(tableroService.listarTodosParaAdmin());
     }
 
     @GetMapping("/{id}")
+    @PreAuthorize("@accesoTableroGuard.puedeAccederATablero(authentication, #id)")
     public ResponseEntity<TableroDTO> obtenerPorId(@PathVariable Long id) {
         return ResponseEntity.ok(tableroService.obtenerPorId(id));
     }
 
     @PostMapping
-    public ResponseEntity<TableroDTO> crearTablero(
-            @AuthenticationPrincipal UserDetails userDetails,
-            @Valid @RequestBody TableroRequest request) {
-        if (!isAdmin(userDetails)) return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<TableroDTO> crearTablero(@Valid @RequestBody TableroRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED).body(tableroService.crearTablero(request));
     }
 
     @PutMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<TableroDTO> actualizarTablero(
-            @AuthenticationPrincipal UserDetails userDetails,
             @PathVariable Long id,
             @Valid @RequestBody TableroRequest request) {
-        if (!isAdmin(userDetails)) return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         return ResponseEntity.ok(tableroService.actualizarTablero(id, request));
     }
 
     @PatchMapping("/{id}/archivar")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<TableroDTO> archivarTablero(
-            @AuthenticationPrincipal UserDetails userDetails,
             @PathVariable Long id,
             @RequestParam boolean archivado) {
-        if (!isAdmin(userDetails)) return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         return ResponseEntity.ok(tableroService.archivarTablero(id, archivado));
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> eliminarTablero(
-            @AuthenticationPrincipal UserDetails userDetails,
-            @PathVariable Long id) {
-        if (!isAdmin(userDetails)) return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<Void> eliminarTablero(@PathVariable Long id) {
         tableroService.eliminarTablero(id);
         return ResponseEntity.noContent().build();
     }
 
     @GetMapping("/{id}/miembros")
+    @PreAuthorize("@accesoTableroGuard.puedeAccederATablero(authentication, #id)")
     public ResponseEntity<List<UsuarioDTO>> getMiembros(@PathVariable Long id) {
         List<Usuario> miembros = usuarioRepository.findByTablerosAsignadosId(id);
         List<UsuarioDTO> dtos = miembros.stream()
@@ -90,10 +83,5 @@ public class TableroController {
                         .rol(u.getRol()).activo(u.isActivo()).build())
                 .collect(java.util.stream.Collectors.toList());
         return ResponseEntity.ok(dtos);
-    }
-
-    private boolean isAdmin(UserDetails userDetails) {
-        return userDetails.getAuthorities().stream()
-                .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
     }
 }

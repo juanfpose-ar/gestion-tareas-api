@@ -5,7 +5,10 @@ import com.gestortareas.api.auth.dto.LoginRequest;
 import com.gestortareas.api.auth.dto.LoginResponse;
 import com.gestortareas.api.auth.dto.ProfileUpdateRequest;
 import com.gestortareas.api.exceptions.BusinessValidationException;
+import com.gestortareas.api.exceptions.TooManyRequestsException;
 import com.gestortareas.api.security.JwtTokenProvider;
+import com.gestortareas.api.security.LoginRateLimiter;
+import com.gestortareas.api.security.PasswordPolicy;
 import com.gestortareas.api.usuario.dto.UsuarioDTO;
 import com.gestortareas.api.usuario.entity.Usuario;
 import com.gestortareas.api.usuario.repository.UsuarioRepository;
@@ -37,6 +40,7 @@ public class AuthController {
     private final UsuarioRepository usuarioRepository;
     private final UsuarioService usuarioService;
     private final PasswordEncoder passwordEncoder;
+    private final LoginRateLimiter loginRateLimiter;
 
     @Value("${app.jwt.expiration-ms:86400000}")
     private long jwtExpirationMs;
@@ -49,12 +53,24 @@ public class AuthController {
 
     @PostMapping("/login")
     public ResponseEntity<LoginResponse> authenticateUser(@Valid @RequestBody LoginRequest loginRequest) {
-        Authentication authentication = authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(
-                        loginRequest.getUsername(),
-                        loginRequest.getPassword()
-                )
-        );
+        if (loginRateLimiter.estaBloqueado(loginRequest.getUsername())) {
+            throw new TooManyRequestsException(
+                    "Demasiados intentos fallidos. Esperá unos minutos y volvé a intentar.");
+        }
+
+        Authentication authentication;
+        try {
+            authentication = authenticationManager.authenticate(
+                    new UsernamePasswordAuthenticationToken(
+                            loginRequest.getUsername(),
+                            loginRequest.getPassword()
+                    )
+            );
+        } catch (org.springframework.security.core.AuthenticationException ex) {
+            loginRateLimiter.registrarFallo(loginRequest.getUsername());
+            throw ex;
+        }
+        loginRateLimiter.registrarExito(loginRequest.getUsername());
 
         SecurityContextHolder.getContext().setAuthentication(authentication);
         String jwt = tokenProvider.generateToken(authentication);
@@ -104,6 +120,7 @@ public class AuthController {
         if (passwordEncoder.matches(request.getPasswordNueva(), usuario.getPassword())) {
             throw new BusinessValidationException("La nueva contraseña debe ser diferente a la actual");
         }
+        PasswordPolicy.validar(request.getPasswordNueva());
 
         usuario.setPassword(passwordEncoder.encode(request.getPasswordNueva()));
         usuarioRepository.save(usuario);
@@ -132,6 +149,7 @@ public class AuthController {
             if (!passwordEncoder.matches(request.getCurrentPassword(), usuario.getPassword())) {
                 throw new BusinessValidationException("La contraseña actual es incorrecta");
             }
+            PasswordPolicy.validar(request.getNewPassword());
             usuario.setPassword(passwordEncoder.encode(request.getNewPassword()));
         }
 
