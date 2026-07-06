@@ -35,7 +35,7 @@ public class EtiquetaControllerIntegrationTest {
     private EtiquetaService etiquetaService;
 
     @Test
-    @WithMockUser
+    @WithMockUser(roles = "ADMIN")
     public void testListarPorTablero() throws Exception {
         EtiquetaDTO dto = EtiquetaDTO.builder().id(10L).nombre("Bug").build();
         when(etiquetaService.listarPorTableroOGlobales(1L)).thenReturn(List.of(dto));
@@ -47,7 +47,7 @@ public class EtiquetaControllerIntegrationTest {
     }
 
     @Test
-    @WithMockUser
+    @WithMockUser(roles = "ADMIN")
     public void testListarGlobales() throws Exception {
         EtiquetaDTO dto = EtiquetaDTO.builder().id(10L).nombre("Bug").build();
         when(etiquetaService.listarGlobales()).thenReturn(List.of(dto));
@@ -58,7 +58,7 @@ public class EtiquetaControllerIntegrationTest {
     }
 
     @Test
-    @WithMockUser
+    @WithMockUser(roles = "ADMIN")
     public void testCrearEtiqueta() throws Exception {
         EtiquetaRequest request = new EtiquetaRequest();
         request.setNombre("Feature");
@@ -77,7 +77,7 @@ public class EtiquetaControllerIntegrationTest {
     }
 
     @Test
-    @WithMockUser
+    @WithMockUser(roles = "ADMIN")
     public void testActualizarEtiqueta() throws Exception {
         EtiquetaRequest request = new EtiquetaRequest();
         request.setNombre("Feature Updated");
@@ -96,7 +96,7 @@ public class EtiquetaControllerIntegrationTest {
     }
 
     @Test
-    @WithMockUser
+    @WithMockUser(roles = "ADMIN")
     public void testEliminarEtiqueta() throws Exception {
         doNothing().when(etiquetaService).eliminarEtiqueta(10L);
 

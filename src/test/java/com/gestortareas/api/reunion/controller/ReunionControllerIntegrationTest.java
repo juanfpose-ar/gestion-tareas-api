@@ -36,7 +36,7 @@ public class ReunionControllerIntegrationTest {
     private ReunionService reunionService;
 
     @Test
-    @WithMockUser
+    @WithMockUser(roles = "ADMIN")
     public void testListarPorTablero() throws Exception {
         ReunionDTO dto = ReunionDTO.builder().id(10L).titulo("Daily").build();
         when(reunionService.findByTableroId(1L)).thenReturn(List.of(dto));
@@ -48,7 +48,7 @@ public class ReunionControllerIntegrationTest {
     }
 
     @Test
-    @WithMockUser
+    @WithMockUser(roles = "ADMIN")
     public void testCrear() throws Exception {
         ReunionRequest request = new ReunionRequest();
         request.setTitulo("Planning");
@@ -71,7 +71,7 @@ public class ReunionControllerIntegrationTest {
     }
 
     @Test
-    @WithMockUser
+    @WithMockUser(roles = "ADMIN")
     public void testActualizar() throws Exception {
         ReunionRequest request = new ReunionRequest();
         request.setTitulo("Daily Updated");
@@ -92,7 +92,7 @@ public class ReunionControllerIntegrationTest {
     }
 
     @Test
-    @WithMockUser
+    @WithMockUser(roles = "ADMIN")
     public void testEliminar() throws Exception {
         doNothing().when(reunionService).eliminar(10L);
 

@@ -78,6 +78,32 @@ public class AuthControllerIntegrationTest {
     }
 
     @Test
+    public void testLogin_RateLimitTrasDemasiadosFallos() throws Exception {
+        // Username propio de este test para no ensuciar el estado del limiter (bean real,
+        // compartido por todo el contexto) de cara a otros tests.
+        LoginRequest request = new LoginRequest();
+        request.setUsername("brute.force.user");
+        request.setPassword("wrong-password");
+
+        when(authenticationManager.authenticate(any(UsernamePasswordAuthenticationToken.class)))
+                .thenThrow(new org.springframework.security.authentication.BadCredentialsException("bad"));
+
+        // Los primeros 10 intentos fallidos (default app.login.max-intentos) devuelven 401.
+        for (int i = 0; i < 10; i++) {
+            mockMvc.perform(post("/api/auth/login")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(objectMapper.writeValueAsString(request)))
+                    .andExpect(status().isUnauthorized());
+        }
+
+        // El intento 11 ya no llega a autenticarse: 429.
+        mockMvc.perform(post("/api/auth/login")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isTooManyRequests());
+    }
+
+    @Test
     public void testLogout_Exitoso() throws Exception {
         mockMvc.perform(post("/api/auth/logout"))
                 .andExpect(status().isOk());

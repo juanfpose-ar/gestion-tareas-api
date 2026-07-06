@@ -35,7 +35,7 @@ public class VersionControllerIntegrationTest {
     private VersionService versionService;
 
     @Test
-    @WithMockUser
+    @WithMockUser(roles = "ADMIN")
     public void testListarPorTablero() throws Exception {
         VersionDTO dto = VersionDTO.builder().id(10L).titulo("v1.0").build();
         when(versionService.listarPorTablero(1L)).thenReturn(List.of(dto));
@@ -47,7 +47,7 @@ public class VersionControllerIntegrationTest {
     }
 
     @Test
-    @WithMockUser
+    @WithMockUser(roles = "ADMIN")
     public void testCrearVersion() throws Exception {
         VersionRequest request = new VersionRequest("v2.0", "2026-12-31", 1L, null, null);
         VersionDTO dto = VersionDTO.builder().id(11L).titulo("v2.0").build();
@@ -62,7 +62,7 @@ public class VersionControllerIntegrationTest {
     }
 
     @Test
-    @WithMockUser
+    @WithMockUser(roles = "ADMIN")
     public void testActualizarVersion() throws Exception {
         VersionRequest request = new VersionRequest("v1.0 Mod", "2026-12-31", 1L, null, null);
         VersionDTO dto = VersionDTO.builder().id(10L).titulo("v1.0 Mod").build();
@@ -77,7 +77,7 @@ public class VersionControllerIntegrationTest {
     }
 
     @Test
-    @WithMockUser
+    @WithMockUser(roles = "ADMIN")
     public void testEliminarVersion() throws Exception {
         doNothing().when(versionService).eliminarVersion(10L);
 

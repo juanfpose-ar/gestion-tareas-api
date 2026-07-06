@@ -34,4 +34,20 @@ public class JwtTokenProviderTest {
     public void testValidateInvalidToken() {
         assertFalse(tokenProvider.validateToken("invalid.token.here"));
     }
+
+    @Test
+    public void testSecretCorto_FallaAlConstruir() {
+        assertThrows(IllegalStateException.class, () -> new JwtTokenProvider("cortito", expiration));
+    }
+
+    @Test
+    public void testSecretVacioONulo_FallaAlConstruir() {
+        assertThrows(IllegalStateException.class, () -> new JwtTokenProvider("", expiration));
+        assertThrows(IllegalStateException.class, () -> new JwtTokenProvider(null, expiration));
+    }
+
+    @Test
+    public void testSecretDe32Bytes_EsValido() {
+        assertDoesNotThrow(() -> new JwtTokenProvider("12345678901234567890123456789012", expiration));
+    }
 }

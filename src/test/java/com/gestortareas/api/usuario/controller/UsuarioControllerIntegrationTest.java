@@ -40,7 +40,7 @@ public class UsuarioControllerIntegrationTest {
     @WithMockUser
     public void testListarTodos() throws Exception {
         UsuarioDTO dto = UsuarioDTO.builder().id(10L).username("test.user").build();
-        when(usuarioService.listarTodos()).thenReturn(List.of(dto));
+        when(usuarioService.listarTodos(false)).thenReturn(List.of(dto));
 
         mockMvc.perform(get("/api/usuarios"))
                 .andExpect(status().isOk())

@@ -70,7 +70,7 @@ public class TableroControllerIntegrationTest {
     }
 
     @Test
-    @WithMockUser
+    @WithMockUser(roles = "ADMIN")
     public void testObtenerPorId() throws Exception {
         TableroDTO dto = TableroDTO.builder().id(10L).titulo("Work Board").build();
         when(tableroService.obtenerPorId(10L)).thenReturn(dto);
@@ -138,7 +138,7 @@ public class TableroControllerIntegrationTest {
     }
 
     @Test
-    @WithMockUser
+    @WithMockUser(roles = "ADMIN")
     public void testGetMiembros() throws Exception {
         Usuario u = Usuario.builder().id(5L).username("member").nombreCompleto("Member").build();
         when(usuarioRepository.findByTablerosAsignadosId(10L)).thenReturn(List.of(u));

@@ -35,7 +35,7 @@ public class EstadoTableroControllerIntegrationTest {
     private EstadoTableroService estadoService;
 
     @Test
-    @WithMockUser
+    @WithMockUser(roles = "ADMIN")
     public void testListarPorTablero() throws Exception {
         EstadoTableroDTO dto = EstadoTableroDTO.builder().id(10L).nombre("ToDo").build();
         when(estadoService.listarPorTablero(1L)).thenReturn(List.of(dto));
@@ -47,7 +47,7 @@ public class EstadoTableroControllerIntegrationTest {
     }
 
     @Test
-    @WithMockUser
+    @WithMockUser(roles = "ADMIN")
     public void testCrearEstado() throws Exception {
         EstadoTableroRequest request = new EstadoTableroRequest();
         request.setNombre("ToDo");
@@ -66,7 +66,7 @@ public class EstadoTableroControllerIntegrationTest {
     }
 
     @Test
-    @WithMockUser
+    @WithMockUser(roles = "ADMIN")
     public void testActualizarEstado() throws Exception {
         EstadoTableroRequest request = new EstadoTableroRequest();
         request.setNombre("ToDo Updated");
@@ -84,7 +84,7 @@ public class EstadoTableroControllerIntegrationTest {
     }
 
     @Test
-    @WithMockUser
+    @WithMockUser(roles = "ADMIN")
     public void testEliminarEstado() throws Exception {
         doNothing().when(estadoService).eliminarEstado(10L);
 

@@ -3,6 +3,7 @@ package com.gestortareas.api.usuario.service;
 import com.gestortareas.api.enums.Rol;
 import com.gestortareas.api.exceptions.BusinessValidationException;
 import com.gestortareas.api.exceptions.EntityNotFoundException;
+import com.gestortareas.api.security.MembresiaTableroCacheService;
 import com.gestortareas.api.tablero.entity.Tablero;
 import com.gestortareas.api.tablero.repository.TableroRepository;
 import com.gestortareas.api.usuario.dto.UsuarioDTO;
@@ -39,6 +40,9 @@ public class UsuarioServiceImplTest {
     @Mock
     private PasswordEncoder passwordEncoder;
 
+    @Mock
+    private MembresiaTableroCacheService membresiaTableroCacheService;
+
     @InjectMocks
     private UsuarioServiceImpl usuarioService;
 
@@ -65,11 +69,24 @@ public class UsuarioServiceImplTest {
     public void testListarTodos() {
         when(usuarioRepository.findAll()).thenReturn(List.of(usuario));
 
-        List<UsuarioDTO> result = usuarioService.listarTodos();
+        List<UsuarioDTO> result = usuarioService.listarTodos(true);
 
         assertEquals(1, result.size());
         assertEquals("user.test", result.get(0).getUsername());
         assertEquals("User Test", result.get(0).getNombreCompleto());
+        assertEquals("test@domain.com", result.get(0).getEmail());
+    }
+
+    @Test
+    public void testListarTodos_SinDatosSensiblesParaNoAdmin() {
+        when(usuarioRepository.findAll()).thenReturn(List.of(usuario));
+
+        List<UsuarioDTO> result = usuarioService.listarTodos(false);
+
+        assertEquals(1, result.size());
+        assertEquals("user.test", result.get(0).getUsername());
+        assertNull(result.get(0).getEmail());
+        assertNull(result.get(0).getTablerosIds());
     }
 
     @Test
@@ -110,7 +127,7 @@ public class UsuarioServiceImplTest {
     public void testCrearUsuario_Exitoso() {
         UsuarioRequest request = new UsuarioRequest();
         request.setUsername("new.user");
-        request.setPassword("pwd");
+        request.setPassword("password123");
         request.setNombreCompleto("New User");
         request.setRol(Rol.USER);
         request.setActivo(true);
@@ -119,7 +136,7 @@ public class UsuarioServiceImplTest {
         request.setTablerosIds(Set.of(1L));
 
         when(usuarioRepository.existsByUsername("new.user")).thenReturn(false);
-        when(passwordEncoder.encode("pwd")).thenReturn("encodedPwd");
+        when(passwordEncoder.encode("password123")).thenReturn("encodedPwd");
         when(tableroRepository.findAllById(any())).thenReturn(List.of(tablero));
         when(usuarioRepository.save(any(Usuario.class))).thenAnswer(inv -> {
             Usuario u = inv.getArgument(0);
@@ -139,7 +156,7 @@ public class UsuarioServiceImplTest {
     public void testCrearUsuario_Duplicado() {
         UsuarioRequest request = new UsuarioRequest();
         request.setUsername("user.test");
-        request.setPassword("pwd");
+        request.setPassword("password123");
         request.setNombreCompleto("User Test");
         request.setRol(Rol.USER);
         request.setActivo(true);
@@ -171,7 +188,7 @@ public class UsuarioServiceImplTest {
     public void testActualizarUsuario_Exitoso() {
         UsuarioRequest request = new UsuarioRequest();
         request.setUsername("user.test");
-        request.setPassword("newPwd");
+        request.setPassword("newPassword123");
         request.setNombreCompleto("User Test Mod");
         request.setRol(Rol.USER);
         request.setActivo(true);
@@ -179,7 +196,7 @@ public class UsuarioServiceImplTest {
         request.setColorAvatar("#00ff00");
 
         when(usuarioRepository.findById(10L)).thenReturn(Optional.of(usuario));
-        when(passwordEncoder.encode("newPwd")).thenReturn("encodedNewPwd");
+        when(passwordEncoder.encode("newPassword123")).thenReturn("encodedNewPwd");
         when(usuarioRepository.save(any(Usuario.class))).thenAnswer(inv -> inv.getArgument(0));
 
         UsuarioDTO result = usuarioService.actualizarUsuario(10L, request);
@@ -187,6 +204,26 @@ public class UsuarioServiceImplTest {
         assertNotNull(result);
         assertEquals("User Test Mod", result.getNombreCompleto());
         assertEquals("#00ff00", result.getColorAvatar());
+        // Sin cambio de tableros, la cache de membresía no se toca.
+        verify(membresiaTableroCacheService, never()).limpiarCache();
+    }
+
+    @Test
+    public void testActualizarUsuario_CambioDeTablerosInvalidaLaCache() {
+        UsuarioRequest request = new UsuarioRequest();
+        request.setUsername("user.test");
+        request.setNombreCompleto("User Test");
+        request.setRol(Rol.USER);
+        request.setActivo(true);
+        request.setTablerosIds(Set.of(1L));
+
+        when(usuarioRepository.findById(10L)).thenReturn(Optional.of(usuario));
+        when(tableroRepository.findAllById(any())).thenReturn(List.of(tablero));
+        when(usuarioRepository.save(any(Usuario.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        usuarioService.actualizarUsuario(10L, request);
+
+        verify(membresiaTableroCacheService, times(1)).limpiarCache();
     }
 
     @Test
@@ -242,9 +279,9 @@ public class UsuarioServiceImplTest {
     @Test
     public void testBlanquearPassword_Exitoso() {
         when(usuarioRepository.findById(10L)).thenReturn(Optional.of(usuario));
-        when(passwordEncoder.encode("newpwd")).thenReturn("encodedNewPwd");
+        when(passwordEncoder.encode("newPassword123")).thenReturn("encodedNewPwd");
 
-        usuarioService.blanquearPassword(10L, "newpwd");
+        usuarioService.blanquearPassword(10L, "newPassword123");
 
         assertEquals("encodedNewPwd", usuario.getPassword());
         verify(usuarioRepository, times(1)).save(usuario);
